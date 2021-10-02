@@ -1,14 +1,26 @@
-# Employee records
-Employees:
-  - name: Martin D'vloper
-    job: Developer
-    skills:
-      - python
-      - perl
-      - pascal
-  - name: Tabitha Bitumen
-    job: Developer
-    skills:
-      - lisp
-      - fortran
-      - erlang
+# Vulkan configuration.
+
+# Application specifics.
+Application:
+    # The minimal required version of Vulkan API.
+    vulkan-version: 1.2.1
+    name: Vulkan Backend Test
+    version: 0.1.0
+    engine-name: Test Engine
+    engine-version: 0.1.0
+    
+# Instance extensions and layers.
+Instance:
+    extensions:
+      - VK_KHR_surface
+      - VK_KHR_win32_surface
+      # Needed to be able to create a debug messenger.
+      - VK_EXT_debug_utils
+    # If no layers are specified, the backend program will not attempt
+    # to create a debug messenger.
+    validation-layers:
+      - VK_LAYER_KHRONOS_validation
+
+# Device preference and feature customization.
+Device:
+    preferred: NVIDIA GeForce GTX 970

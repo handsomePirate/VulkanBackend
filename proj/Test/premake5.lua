@@ -17,6 +17,7 @@ project "Test"
 	
 	links {
 		"SoftwareCore",
+		"VulkanBackend",
 		"yaml-cpp"
 	}
 	
