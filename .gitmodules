@@ -1,0 +1,3 @@
+[submodule "SoftwareCore"]
+	path = SoftwareCore
+	url = git@github.com:handsomePirate/SoftwareCore.git
