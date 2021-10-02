@@ -17,6 +17,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData);
 
+void DestroyInstance(VulkanBackend::Initialized& initialized);
+
 VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 {
 	// TODO: Allocator.
@@ -153,6 +155,8 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 	// TODO: Debug object names.
 
 	VkPhysicalDevice pickedDevice = VK_NULL_HANDLE;
+	VkPhysicalDeviceProperties pickedDeviceProperties{};
+	VkPhysicalDeviceFeatures pickedDeviceFeatures{};
 
 	if (configData["Device"])
 	{
@@ -162,8 +166,29 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 		std::vector<VkPhysicalDevice> devices(deviceCount);
 		VulkanCheck(vkEnumeratePhysicalDevices(initialized.instance, &deviceCount, devices.data()));
 
+		std::vector<std::string> requiredFeatures;
+		if (configData["Device"]["features"])
+		{
+			std::vector<std::string> requiredFeaturesMessy;
+			for (int f = 0; f < configData["Device"]["features"].size(); ++f)
+			{
+				requiredFeaturesMessy.push_back(configData["Device"]["features"][f].as<std::string>());
+			}
+			requiredFeatures.resize(requiredFeaturesMessy.size());
+
+			for (int f = 0; f < requiredFeatures.size(); ++f)
+			{
+				requiredFeatures[f].resize(requiredFeaturesMessy[f].length());
+				for (int c = 0; c < requiredFeaturesMessy[f].length(); ++c)
+				{
+					requiredFeatures[f][c] = tolower(requiredFeaturesMessy[f][c]);
+				}
+			}
+		}
+
 		std::vector<VkPhysicalDeviceProperties> deviceProperties(deviceCount);
-		std::string preferredName;
+		std::vector<VkPhysicalDeviceFeatures> deviceFeatures(deviceCount);
+		std::string preferredName = "";
 		bool foundPreferredDevice = true;
 		if (configData["Device"]["preferred"])
 		{
@@ -173,16 +198,127 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 		for (int d = 0; d < devices.size(); ++d)
 		{
 			vkGetPhysicalDeviceProperties(devices[d], &deviceProperties[d]);
+			vkGetPhysicalDeviceFeatures(devices[d], &deviceFeatures[d]);
 			if (!foundPreferredDevice && deviceProperties[d].deviceName == preferredName)
 			{
-				pickedDevice = devices[d];
-				foundPreferredDevice = true;
+				if (deviceProperties[d].apiVersion >= vulkanApplicationInfo.apiVersion)
+				{
+					if (Configurator::CheckFeaturesPresent(deviceFeatures[d], deviceProperties[d], requiredFeatures))
+					{
+						pickedDevice = devices[d];
+						pickedDeviceProperties = deviceProperties[d];
+						pickedDeviceFeatures = deviceFeatures[d];
+						foundPreferredDevice = true;
+						break;
+					}
+				}
+				else
+				{
+					int major = VK_API_VERSION_MAJOR(deviceProperties[d].apiVersion);
+					int minor = VK_API_VERSION_MINOR(deviceProperties[d].apiVersion);
+					int patch = VK_API_VERSION_PATCH(deviceProperties[d].apiVersion);
+					
+					CoreLogInfo(VulkanLogger, 
+						"Configuration: Preferred device does not support the selected API version (maximum supported version: %i.%i.%i).",
+						major, minor, patch);
+
+					foundPreferredDevice = true;
+				}
+			}
+
+			if (deviceProperties[d].apiVersion < vulkanApplicationInfo.apiVersion)
+			{
+				devices[d] = VK_NULL_HANDLE;
 			}
 		}
 
 		if (!foundPreferredDevice)
 		{
-			CoreLogError(VulkanLogger, "Configuration: Preferred device could not be found.");
+			CoreLogInfo(VulkanLogger, "Configuration: Preferred device matching requirements could not be found.");
+		}
+
+		if (configData["Device"]["preferred"] && configData["Device"]["preferred-vendor"] && pickedDevice != VK_NULL_HANDLE)
+		{
+			CoreLogInfo(VulkanLogger, "Configuration: Found preferred device that meets requirements; skipping preferred vendor.");
+		}
+
+		if (pickedDevice == VK_NULL_HANDLE)
+		{
+			uint32_t preferredVendorId = 0;
+			if (configData["Device"]["preferred-vendor"])
+			{
+				preferredVendorId = Configurator::VendorIdFromString(configData["Device"]["preferred-vendor"].as<std::string>());
+			}
+			;
+			std::vector<VkPhysicalDevice> preferredDevices;
+			std::vector<VkPhysicalDeviceProperties> preferredDevicesProperties;
+			std::vector<VkPhysicalDeviceFeatures> preferredDevicesFeatures;
+			std::vector<VkPhysicalDevice> otherDevices;
+			std::vector<VkPhysicalDeviceProperties> otherDevicesProperties;
+			std::vector<VkPhysicalDeviceFeatures> otherDevicesFeatures;
+
+			for (int d = 0; d < devices.size(); ++d)
+			{
+				if (devices[d] != VK_NULL_HANDLE)
+				{
+					if (preferredVendorId > 0 && deviceProperties[d].vendorID == preferredVendorId)
+					{
+						preferredDevices.push_back(devices[d]);
+						preferredDevicesProperties.push_back(deviceProperties[d]);
+						preferredDevicesFeatures.push_back(deviceFeatures[d]);
+					}
+					else
+					{
+						otherDevices.push_back(devices[d]);
+						otherDevicesProperties.push_back(deviceProperties[d]);
+						otherDevicesFeatures.push_back(deviceFeatures[d]);
+					}
+				}
+			}
+
+			for (int d = 0; d < preferredDevices.size(); ++d)
+			{
+				if (preferredDevicesProperties[d].apiVersion >= vulkanApplicationInfo.apiVersion)
+				{
+					if (Configurator::CheckFeaturesPresent(preferredDevicesFeatures[d], preferredDevicesProperties[d], requiredFeatures))
+					{
+						pickedDevice = preferredDevices[d];
+						pickedDeviceProperties = preferredDevicesProperties[d];
+						pickedDeviceFeatures = preferredDevicesFeatures[d];
+						CoreLogInfo(VulkanLogger, "Configuration: Found suitable preferred vendor device.");
+						break;
+					}
+				}
+			}
+
+			if (pickedDevice == VK_NULL_HANDLE)
+			{
+				if (preferredVendorId > 0)
+				{
+					CoreLogInfo(VulkanLogger, "Configuration: No suitable devices found from preferred vendor.");
+				}
+				for (int d = 0; d < otherDevices.size(); ++d)
+				{
+					if (otherDevicesProperties[d].apiVersion >= vulkanApplicationInfo.apiVersion)
+					{
+						if (Configurator::CheckFeaturesPresent(otherDevicesFeatures[d], otherDevicesProperties[d], requiredFeatures))
+						{
+							pickedDevice = otherDevices[d];
+							pickedDeviceProperties = otherDevicesProperties[d];
+							pickedDeviceFeatures = otherDevicesFeatures[d];
+							CoreLogInfo(VulkanLogger, "Configuration: A satisfactory device found.");
+							break;
+						}
+					}
+				}
+			}
+
+			if (pickedDevice == VK_NULL_HANDLE)
+			{
+				CoreLogError(VulkanLogger, "Configuration: No suitable devices available - initialization failed.");
+				DestroyInstance(initialized);
+				return initialized;
+			}
 		}
 	}
 
@@ -191,6 +327,11 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 }
 
 void VulkanBackend::Destroy(Initialized& initialized)
+{
+	DestroyInstance(initialized);
+}
+
+void DestroyInstance(VulkanBackend::Initialized& initialized)
 {
 	if (initialized.debugMessenger != VK_NULL_HANDLE)
 	{

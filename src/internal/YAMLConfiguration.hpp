@@ -9,7 +9,7 @@ namespace Configurator
 		int major, minor, patch;
 		uint32_t Make() const
 		{
-			return VK_MAKE_VERSION(major, minor, patch);
+			return VK_MAKE_API_VERSION(0, major, minor, patch);
 		}
 	};
 
@@ -33,4 +33,9 @@ namespace Configurator
 
 	ApplicationInfo ConfigureApplication(const YAML::Node& applicationData);
 	VkApplicationInfo GetVulkanApplicationInfo(const ApplicationInfo& applicationInfo);
+
+	uint32_t VendorIdFromString(const std::string& name);
+
+	bool CheckFeaturesPresent(const VkPhysicalDeviceFeatures& deviceFeatures, const VkPhysicalDeviceProperties& deviceProperties,
+		const std::vector<std::string>& requiredFeatures);
 }

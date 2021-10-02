@@ -79,3 +79,57 @@ VkApplicationInfo Configurator::GetVulkanApplicationInfo(const ApplicationInfo& 
 
 	return vulkanApplicationInfo;
 }
+
+uint32_t Configurator::VendorIdFromString(const std::string& name)
+{
+	std::string nameLower;
+	nameLower.resize(name.length());
+
+	for (int c = 0; c < name.length(); ++c)
+	{
+		nameLower[c] = tolower(name[c]);
+	}
+
+	if (nameLower == "amd" || nameLower == "advanced micro devices")
+	{
+		return 0x1002;
+	}
+
+	if (nameLower == "imgtec" || nameLower == "imagination technologies")
+	{
+		return 0x1010;
+	}
+
+	if (nameLower == "nvda" || nameLower == "nvidia")
+	{
+		return 0x10DE;
+	}
+
+	if (nameLower == "arm" || nameLower == "arm holdings")
+	{
+		return 0x13B5;
+	}
+
+	if (nameLower == "qualcomm")
+	{
+		return 0x5143;
+	}
+
+	if (nameLower == "intel" )
+	{
+		return 0x8086;
+	}
+}
+
+bool Configurator::CheckFeaturesPresent(const VkPhysicalDeviceFeatures& deviceFeatures, const VkPhysicalDeviceProperties& deviceProperties,
+	const std::vector<std::string>& requiredFeatures)
+{
+	if ((std::find(requiredFeatures.begin(), requiredFeatures.end(), "dedicated") != requiredFeatures.end() ||
+		std::find(requiredFeatures.begin(), requiredFeatures.end(), "discrete") != requiredFeatures.end()) &&
+		deviceProperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+	{
+		return false;
+	}
+
+	return true;
+}
