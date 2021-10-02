@@ -4,3 +4,6 @@
 [submodule "ext/SoftwareCore"]
 	path = ext/SoftwareCore
 	url = git@github.com:handsomePirate/SoftwareCore.git
+[submodule "ext/yaml"]
+	path = ext/yaml
+	url = git@github.com:handsomePirate/yaml-cpp.git
