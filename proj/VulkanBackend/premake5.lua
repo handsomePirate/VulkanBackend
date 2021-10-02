@@ -10,6 +10,7 @@ project "VulkanBackend"
 	
 	includedirs {
 		"../../ext/SoftwareCore/src",
+		"../../ext/yaml/include",
 		"../../src",
 		"$(VULKAN_SDK)/include"
 	}
@@ -17,7 +18,8 @@ project "VulkanBackend"
 	links {
 		"$(VULKAN_SDK)/lib/vulkan-1.lib",
 		"$(VULKAN_SDK)/lib/shaderc_shared.lib",
-		"SoftwareCore"
+		"SoftwareCore",
+		"yaml-cpp"
 	}
 
 	filter "system:windows"
