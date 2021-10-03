@@ -166,9 +166,10 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 	// ================================== Device ==================================
 
 	// The chosen device and its features and properties.
-	VkPhysicalDevice pickedDevice = VK_NULL_HANDLE;
 	VkPhysicalDeviceProperties pickedDeviceProperties{};
 	VkPhysicalDeviceFeatures pickedDeviceFeatures{};
+
+	VkPhysicalDeviceFeatures enabledFeatures;
 
 	if (configData["Device"])
 	{
@@ -202,6 +203,8 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 			}
 		}
 
+		enabledFeatures = Configurator::FeaturesFromString(requiredFeatures);
+
 		std::vector<VkPhysicalDeviceProperties> deviceProperties(deviceCount);
 		std::vector<VkPhysicalDeviceFeatures> deviceFeatures(deviceCount);
 		std::string preferredName = "";
@@ -225,7 +228,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 					if (Configurator::CheckFeaturesPresent(deviceFeatures[d], deviceProperties[d], requiredFeatures))
 					{
 						// In this case, we found the preferred device and it fits the requirements.
-						pickedDevice = devices[d];
+						initialized.physicalDevice = devices[d];
 						pickedDeviceProperties = deviceProperties[d];
 						pickedDeviceFeatures = deviceFeatures[d];
 						foundPreferredDevice = true;
@@ -260,7 +263,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 			CoreLogInfo(VulkanLogger, "Configuration: Preferred device matching requirements could not be found.");
 		}
 
-		if (pickedDevice == VK_NULL_HANDLE)
+		if (initialized.physicalDevice == VK_NULL_HANDLE)
 		{
 			// If we do not have a device selected, we split the devices into two groups (preferred vendor and the rest).
 			uint32_t preferredVendorId = 0;
@@ -302,7 +305,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 				{
 					if (Configurator::CheckFeaturesPresent(preferredDevicesFeatures[d], preferredDevicesProperties[d], requiredFeatures))
 					{
-						pickedDevice = preferredDevices[d];
+						initialized.physicalDevice = preferredDevices[d];
 						pickedDeviceProperties = preferredDevicesProperties[d];
 						pickedDeviceFeatures = preferredDevicesFeatures[d];
 						CoreLogInfo(VulkanLogger, "Configuration: Found suitable preferred vendor device.");
@@ -311,7 +314,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 				}
 			}
 
-			if (pickedDevice == VK_NULL_HANDLE)
+			if (initialized.physicalDevice == VK_NULL_HANDLE)
 			{
 				// Checking the rest of the devices if no suitable preferred vendor device is present.
 				if (preferredVendorId > 0)
@@ -324,7 +327,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 					{
 						if (Configurator::CheckFeaturesPresent(otherDevicesFeatures[d], otherDevicesProperties[d], requiredFeatures))
 						{
-							pickedDevice = otherDevices[d];
+							initialized.physicalDevice = otherDevices[d];
 							pickedDeviceProperties = otherDevicesProperties[d];
 							pickedDeviceFeatures = otherDevicesFeatures[d];
 							CoreLogInfo(VulkanLogger, "Configuration: A satisfactory device found.");
@@ -334,7 +337,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 				}
 			}
 
-			if (pickedDevice == VK_NULL_HANDLE)
+			if (initialized.physicalDevice == VK_NULL_HANDLE)
 			{
 				// In case no available device fulfills the requirements, we report a failure and the initialization cannot continue.
 				CoreLogError(VulkanLogger, "Configuration: No suitable devices available - initialization failed.");
@@ -343,6 +346,36 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 			}
 		}
 	}
+
+	// Retrieving device extension.
+	std::vector<std::string> deviceExtensions;
+	auto deviceExtensionsData = configData["Device"]["extensions"];
+	if (deviceExtensionsData)
+	{
+		for (int e = 0; e < deviceExtensionsData.size(); ++e)
+		{
+			deviceExtensions.push_back(deviceExtensionsData[e].as<std::string>());
+		}
+	}
+
+	// Converting device extensions to const char*.
+	std::vector<const char*> deviceExtensionsChar(deviceExtensions.size());
+	for (int e = 0; e < deviceExtensions.size(); ++e)
+	{
+		deviceExtensionsChar[e] = deviceExtensions[e].c_str();
+	}
+
+	// TODO: Swapchain switch.
+
+	VkDeviceCreateInfo deviceCreateInfo{};
+	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	deviceCreateInfo.pEnabledFeatures = &enabledFeatures;
+	deviceCreateInfo.ppEnabledExtensionNames = deviceExtensionsChar.data();
+	deviceCreateInfo.enabledExtensionCount = (uint32_t)deviceExtensionsChar.size();
+	deviceCreateInfo.pQueueCreateInfos;
+	deviceCreateInfo.queueCreateInfoCount;
+
+	VulkanCheck(vkCreateDevice(initialized.physicalDevice, &deviceCreateInfo, nullptr, &initialized.logicalDevice));
 
 	// Returning the initialized Vulkan structures.
 	return initialized;

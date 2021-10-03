@@ -5,6 +5,8 @@
 
 DEF_HANDLE(VkInstance);
 DEF_HANDLE(VkDebugUtilsMessengerEXT);
+DEF_HANDLE(VkPhysicalDevice);
+DEF_HANDLE(VkDevice);
 
 namespace VulkanBackend
 {
@@ -14,6 +16,8 @@ namespace VulkanBackend
 	{
 		VkInstance instance;
 		VkDebugUtilsMessengerEXT debugMessenger;
+		VkPhysicalDevice physicalDevice;
+		VkDevice logicalDevice;
 	};
 
 	Initialized Initialize(const char* configFilePath);

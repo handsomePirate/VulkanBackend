@@ -137,6 +137,7 @@ uint32_t Configurator::VendorIdFromString(const std::string& name)
 bool Configurator::CheckFeaturesPresent(const VkPhysicalDeviceFeatures& deviceFeatures, const VkPhysicalDeviceProperties& deviceProperties,
 	const std::vector<std::string>& requiredFeatures)
 {
+	// TODO: discrete from bool and the rest from actual VkPhysicalDeviceFeatures.
 	if ((std::find(requiredFeatures.begin(), requiredFeatures.end(), "dedicated") != requiredFeatures.end() ||
 		std::find(requiredFeatures.begin(), requiredFeatures.end(), "discrete") != requiredFeatures.end()) &&
 		deviceProperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
@@ -167,6 +168,55 @@ bool Configurator::CheckFeaturesPresent(const VkPhysicalDeviceFeatures& deviceFe
 	{
 		return false;
 	}
+
+	if (std::find(requiredFeatures.begin(), requiredFeatures.end(), "int64") != requiredFeatures.end() &&
+		deviceFeatures.shaderInt64 != VK_TRUE)
+	{
+		return false;
+	}
+
+	if (std::find(requiredFeatures.begin(), requiredFeatures.end(), "float64") != requiredFeatures.end() &&
+		deviceFeatures.shaderFloat64 != VK_TRUE)
+	{
+		return false;
+	}
 	
 	return true;
+}
+
+VkPhysicalDeviceFeatures Configurator::FeaturesFromString(const std::vector<std::string>& requiredFeatures)
+{
+	VkPhysicalDeviceFeatures result{};
+
+	if (std::find(requiredFeatures.begin(), requiredFeatures.end(), "geometry shader") != requiredFeatures.end())
+	{
+		result.geometryShader = VK_TRUE;
+	}
+
+	if (std::find(requiredFeatures.begin(), requiredFeatures.end(), "sparse binding") != requiredFeatures.end())
+	{
+		result.sparseBinding = VK_TRUE;
+	}
+
+	if (std::find(requiredFeatures.begin(), requiredFeatures.end(), "tessellation shader") != requiredFeatures.end())
+	{
+		result.tessellationShader = VK_TRUE;
+	}
+
+	if (std::find(requiredFeatures.begin(), requiredFeatures.end(), "wide lines") != requiredFeatures.end())
+	{
+		result.wideLines = VK_TRUE;
+	}
+
+	if (std::find(requiredFeatures.begin(), requiredFeatures.end(), "int64") != requiredFeatures.end())
+	{
+		result.shaderInt64 = VK_TRUE;
+	}
+
+	if (std::find(requiredFeatures.begin(), requiredFeatures.end(), "float64") != requiredFeatures.end())
+	{
+		result.shaderFloat64 = VK_TRUE;
+	}
+
+	return result;
 }

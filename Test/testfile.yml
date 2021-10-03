@@ -29,3 +29,10 @@ Device:
     preferred-vendor: nvda
     features:
       - dedicated
+    extensions:
+      - VK_KHR_swapchain
+    queues:
+      - graphics
+      - compute
+      - transfer
+      - present

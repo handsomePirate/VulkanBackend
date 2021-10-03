@@ -38,4 +38,5 @@ namespace Configurator
 
 	bool CheckFeaturesPresent(const VkPhysicalDeviceFeatures& deviceFeatures, const VkPhysicalDeviceProperties& deviceProperties,
 		const std::vector<std::string>& requiredFeatures);
+	VkPhysicalDeviceFeatures FeaturesFromString(const std::vector<std::string>& requiredFeatures);
 }
