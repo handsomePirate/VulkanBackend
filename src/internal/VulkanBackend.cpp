@@ -3,6 +3,7 @@
 #include "ErrorCheck.hpp"
 #include "VulkanLogger/Logger.hpp"
 #include <Logger/Logger.hpp>
+#include <WindowAPI.hpp>
 #include <vulkan/vulkan.hpp>
 #include <yaml-cpp/yaml.h>
 
@@ -365,7 +366,11 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 		deviceExtensionsChar[e] = deviceExtensions[e].c_str();
 	}
 
-	// TODO: Swapchain switch.
+	if (Configurator::SwapchainRequired(deviceExtensions))
+	{
+		// If swapchain support is required, we need to check present support using a dummy surface.
+		VkSurfaceKHR surface;
+	}
 
 	VkDeviceCreateInfo deviceCreateInfo{};
 	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

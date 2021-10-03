@@ -220,3 +220,16 @@ VkPhysicalDeviceFeatures Configurator::FeaturesFromString(const std::vector<std:
 
 	return result;
 }
+
+bool Configurator::SwapchainRequired(const std::vector<std::string>& deviceExtensions)
+{
+	std::regex swapchainRegex(".+(_swapchain).*");
+	for (int e = 0; e < deviceExtensions.size(); ++e)
+	{
+		if (std::regex_match(deviceExtensions[e], swapchainRegex))
+		{
+			return true;
+		}
+	}
+	return false;
+}
