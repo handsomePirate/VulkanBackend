@@ -31,8 +31,11 @@ Device:
       - dedicated
     extensions:
       - VK_KHR_swapchain
+    # Requesting queues.
+    # If only graphics is selected, compute and transfer can share it, otherwise the program will attempt to
+    # find distinct ones.
     queues:
-      - graphics
-      - compute
-      - transfer
+      - graphics: 1
+      - compute: 1
+      - transfer: 1
       - present

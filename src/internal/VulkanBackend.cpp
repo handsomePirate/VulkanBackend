@@ -1,6 +1,7 @@
 #include "../VulkanBackendAPI.hpp"
 #include "YAMLConfiguration.hpp"
 #include "ErrorCheck.hpp"
+#include "../platform/Surface.hpp"
 #include "VulkanLogger/Logger.hpp"
 #include <Logger/Logger.hpp>
 #include <WindowAPI.hpp>
@@ -166,11 +167,74 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 
 	// ================================== Device ==================================
 
+	// Retrieving device extensions.
+	std::vector<std::string> deviceExtensions;
+	auto deviceExtensionsData = configData["Device"]["extensions"];
+	if (deviceExtensionsData)
+	{
+		for (int e = 0; e < deviceExtensionsData.size(); ++e)
+		{
+			deviceExtensions.push_back(deviceExtensionsData[e].as<std::string>());
+		}
+	}
+
+	// Converting device extensions to const char*.
+	std::vector<const char*> deviceExtensionsChar(deviceExtensions.size());
+	for (int e = 0; e < deviceExtensions.size(); ++e)
+	{
+		deviceExtensionsChar[e] = deviceExtensions[e].c_str();
+	}
+
+	VkSurfaceKHR dummySurface;
+	if (Configurator::SwapchainRequired(deviceExtensions))
+	{
+		// If swapchain support is required, we need to check present support using a dummy surface.
+		// The dummy window is created out of the screen so that it is not visible.
+		EverViewport::Window dummyWindow(-10000, -10000, 0, 0, "vulkan dummy window", EverViewport::WindowCallbacks{});
+		dummySurface = VulkanSurface::Create(initialized.instance, dummyWindow.GetWindowHandle());
+	}
+
+	std::vector<std::pair<std::string, int>> queueRequirements;
+	auto queueRequirementsData = configData["Device"]["queues"];
+	if (queueRequirementsData)
+	{
+		for (int qr = 0; qr < queueRequirementsData.size(); ++qr)
+		{
+			if (queueRequirementsData[qr].IsScalar())
+			{
+				queueRequirements.emplace_back(queueRequirementsData[qr].as<std::string>(), 1);
+			}
+			else
+			{
+				if (queueRequirementsData[qr]["graphics"])
+				{
+					queueRequirements.emplace_back("graphics", queueRequirementsData[qr]["graphics"].as<int>());
+				}
+				else if (queueRequirementsData[qr]["compute"])
+				{
+					queueRequirements.emplace_back("compute", queueRequirementsData[qr]["compute"].as<int>());
+				}
+				else if (queueRequirementsData[qr]["transfer"])
+				{
+					queueRequirements.emplace_back("transfer", queueRequirementsData[qr]["transfer"].as<int>());
+				}
+				else if (queueRequirementsData[qr]["present"])
+				{
+					queueRequirements.emplace_back("present", queueRequirementsData[qr]["present"].as<int>());
+				}
+			}
+		}
+	}
+
 	// The chosen device and its features and properties.
 	VkPhysicalDeviceProperties pickedDeviceProperties{};
 	VkPhysicalDeviceFeatures pickedDeviceFeatures{};
 
 	VkPhysicalDeviceFeatures enabledFeatures;
+
+	std::vector<std::vector<int>> outputIndices;
+	int deviceIndex;
+	int deviceQueueFamilyCount;
 
 	if (configData["Device"])
 	{
@@ -206,6 +270,12 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 
 		enabledFeatures = Configurator::FeaturesFromString(requiredFeatures);
 
+
+		std::vector<std::vector<VkQueueFamilyProperties>> queueProperties(deviceCount);
+		std::vector<std::vector<VkBool32>> queueSupportsPresent(deviceCount);
+
+		outputIndices.resize(deviceCount);
+
 		std::vector<VkPhysicalDeviceProperties> deviceProperties(deviceCount);
 		std::vector<VkPhysicalDeviceFeatures> deviceFeatures(deviceCount);
 		std::string preferredName = "";
@@ -221,18 +291,34 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 			// Retrieving current device properties and features.
 			vkGetPhysicalDeviceProperties(devices[d], &deviceProperties[d]);
 			vkGetPhysicalDeviceFeatures(devices[d], &deviceFeatures[d]);
+
+			uint32_t queueCount;
+			vkGetPhysicalDeviceQueueFamilyProperties(devices[d], &queueCount, NULL);
+			queueProperties[d].resize(queueCount);
+			vkGetPhysicalDeviceQueueFamilyProperties(devices[d], &queueCount, queueProperties[d].data());
+			queueSupportsPresent[d].resize(queueCount);
+			outputIndices[d].resize(queueCount);
+
+			for (int q = 0; q < queueSupportsPresent[d].size(); ++q)
+			{
+				vkGetPhysicalDeviceSurfaceSupportKHR(devices[d], q, dummySurface, &queueSupportsPresent[d][q]);
+			}
+
 			if (!foundPreferredDevice && deviceProperties[d].deviceName == preferredName)
 			{
 				if (deviceProperties[d].apiVersion >= vulkanApplicationInfo.apiVersion)
 				{
 					// If the requested API version is supported by the device, checking required features support.
-					if (Configurator::CheckFeaturesPresent(deviceFeatures[d], deviceProperties[d], requiredFeatures))
+					if (Configurator::CheckFeaturesPresent(deviceFeatures[d], deviceProperties[d], requiredFeatures) &&
+						Configurator::CheckQueueSupport(queueRequirements, queueProperties[d], queueSupportsPresent[d], outputIndices[d]))
 					{
 						// In this case, we found the preferred device and it fits the requirements.
 						initialized.physicalDevice = devices[d];
 						pickedDeviceProperties = deviceProperties[d];
 						pickedDeviceFeatures = deviceFeatures[d];
 						foundPreferredDevice = true;
+						deviceIndex = d;
+						deviceQueueFamilyCount = queueCount;
 						break;
 					}
 				}
@@ -304,11 +390,14 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 			{
 				if (preferredDevicesProperties[d].apiVersion >= vulkanApplicationInfo.apiVersion)
 				{
-					if (Configurator::CheckFeaturesPresent(preferredDevicesFeatures[d], preferredDevicesProperties[d], requiredFeatures))
+					if (Configurator::CheckFeaturesPresent(preferredDevicesFeatures[d], preferredDevicesProperties[d], requiredFeatures) &&
+						Configurator::CheckQueueSupport(queueRequirements, queueProperties[d], queueSupportsPresent[d], outputIndices[d]))
 					{
 						initialized.physicalDevice = preferredDevices[d];
 						pickedDeviceProperties = preferredDevicesProperties[d];
 						pickedDeviceFeatures = preferredDevicesFeatures[d];
+						deviceIndex = d;
+						deviceQueueFamilyCount = (int)queueProperties[d].size();
 						CoreLogInfo(VulkanLogger, "Configuration: Found suitable preferred vendor device.");
 						break;
 					}
@@ -326,11 +415,14 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 				{
 					if (otherDevicesProperties[d].apiVersion >= vulkanApplicationInfo.apiVersion)
 					{
-						if (Configurator::CheckFeaturesPresent(otherDevicesFeatures[d], otherDevicesProperties[d], requiredFeatures))
+						if (Configurator::CheckFeaturesPresent(otherDevicesFeatures[d], otherDevicesProperties[d], requiredFeatures) &&
+							Configurator::CheckQueueSupport(queueRequirements, queueProperties[d], queueSupportsPresent[d], outputIndices[d]))
 						{
 							initialized.physicalDevice = otherDevices[d];
 							pickedDeviceProperties = otherDevicesProperties[d];
 							pickedDeviceFeatures = otherDevicesFeatures[d];
+							deviceIndex = d;
+							deviceQueueFamilyCount = (int)queueProperties[d].size();
 							CoreLogInfo(VulkanLogger, "Configuration: A satisfactory device found.");
 							break;
 						}
@@ -348,46 +440,89 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 		}
 	}
 
-	// Retrieving device extension.
-	std::vector<std::string> deviceExtensions;
-	auto deviceExtensionsData = configData["Device"]["extensions"];
-	if (deviceExtensionsData)
+	if (dummySurface != VK_NULL_HANDLE)
 	{
-		for (int e = 0; e < deviceExtensionsData.size(); ++e)
-		{
-			deviceExtensions.push_back(deviceExtensionsData[e].as<std::string>());
-		}
+		vkDestroySurfaceKHR(initialized.instance, dummySurface, nullptr);
 	}
 
-	// Converting device extensions to const char*.
-	std::vector<const char*> deviceExtensionsChar(deviceExtensions.size());
-	for (int e = 0; e < deviceExtensions.size(); ++e)
+	std::vector<int> requestedQueues(deviceQueueFamilyCount);
+	memset(requestedQueues.data(), 0, sizeof(int) * requestedQueues.size());
+	std::set<int> distinctFamilies;
+
+	// TODO: Figure out priorities.
+	std::vector<float> queuePriorities;
+	for (int oi = 0; oi < outputIndices[deviceIndex].size(); ++oi)
 	{
-		deviceExtensionsChar[e] = deviceExtensions[e].c_str();
+		distinctFamilies.insert(outputIndices[deviceIndex][oi]);
+		++requestedQueues[outputIndices[deviceIndex][oi]];
+		queuePriorities.push_back(0.f);
 	}
 
-	if (Configurator::SwapchainRequired(deviceExtensions))
-	{
-		// If swapchain support is required, we need to check present support using a dummy surface.
-		VkSurfaceKHR surface;
-	}
+	std::vector<VkDeviceQueueCreateInfo> deviceQueueCreateInfos(distinctFamilies.size());
 
+	for (int f = 0; f < deviceQueueCreateInfos.size(); ++f)
+	{
+		deviceQueueCreateInfos[f] = {};
+		deviceQueueCreateInfos[f].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		deviceQueueCreateInfos[f].pQueuePriorities = queuePriorities.data();
+		deviceQueueCreateInfos[f].queueFamilyIndex = f;
+		deviceQueueCreateInfos[f].queueCount = requestedQueues[f];
+	}
+	
 	VkDeviceCreateInfo deviceCreateInfo{};
 	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	deviceCreateInfo.pEnabledFeatures = &enabledFeatures;
 	deviceCreateInfo.ppEnabledExtensionNames = deviceExtensionsChar.data();
 	deviceCreateInfo.enabledExtensionCount = (uint32_t)deviceExtensionsChar.size();
-	deviceCreateInfo.pQueueCreateInfos;
-	deviceCreateInfo.queueCreateInfoCount;
+	deviceCreateInfo.pQueueCreateInfos = deviceQueueCreateInfos.data();
+	deviceCreateInfo.queueCreateInfoCount = (uint32_t)deviceQueueCreateInfos.size();
 
 	VulkanCheck(vkCreateDevice(initialized.physicalDevice, &deviceCreateInfo, nullptr, &initialized.logicalDevice));
 
+	std::vector<int> graphicsFamilyIndices, computeFamilyIndices, transferFamilyIndices, presentFamilyIndices;
+
+	Configurator::ConsolidateQueues(queueRequirements, outputIndices[deviceIndex], graphicsFamilyIndices, "graphics");
+	Configurator::ConsolidateQueues(queueRequirements, outputIndices[deviceIndex], computeFamilyIndices, "compute");
+	Configurator::ConsolidateQueues(queueRequirements, outputIndices[deviceIndex], transferFamilyIndices, "transfer");
+	Configurator::ConsolidateQueues(queueRequirements, outputIndices[deviceIndex], presentFamilyIndices, "present");
+
+	std::vector<int> queuesCurrentIndex(deviceQueueFamilyCount);
+
+	initialized.graphicsQueues.resize(graphicsFamilyIndices.size());
+	for (int i = 0; i < graphicsFamilyIndices.size(); ++i)
+	{
+		vkGetDeviceQueue(initialized.logicalDevice, graphicsFamilyIndices[i],
+			queuesCurrentIndex[graphicsFamilyIndices[i]]++, &initialized.graphicsQueues[i]);
+	}
+	
+	initialized.computeQueues.resize(computeFamilyIndices.size());
+	for (int i = 0; i < computeFamilyIndices.size(); ++i)
+	{
+		vkGetDeviceQueue(initialized.logicalDevice, computeFamilyIndices[i],
+			queuesCurrentIndex[computeFamilyIndices[i]]++, &initialized.computeQueues[i]);
+	}
+
+	initialized.transferQueues.resize(transferFamilyIndices.size());
+	for (int i = 0; i < transferFamilyIndices.size(); ++i)
+	{
+		vkGetDeviceQueue(initialized.logicalDevice, transferFamilyIndices[i],
+			queuesCurrentIndex[transferFamilyIndices[i]]++, &initialized.transferQueues[i]);
+	}
+
+	initialized.presentQueues.resize(presentFamilyIndices.size());
+	for (int i = 0; i < presentFamilyIndices.size(); ++i)
+	{
+		vkGetDeviceQueue(initialized.logicalDevice, presentFamilyIndices[i],
+			queuesCurrentIndex[presentFamilyIndices[i]]++, &initialized.presentQueues[i]);
+	}
+	
 	// Returning the initialized Vulkan structures.
 	return initialized;
 }
 
 void VulkanBackend::Destroy(Initialized& initialized)
 {
+	vkDestroyDevice(initialized.logicalDevice, nullptr);
 	DestroyInstance(initialized);
 }
 
