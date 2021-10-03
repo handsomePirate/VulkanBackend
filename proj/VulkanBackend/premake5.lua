@@ -11,6 +11,7 @@ project "VulkanBackend"
 	includedirs {
 		"../../ext/SoftwareCore/src",
 		"../../ext/yaml/include",
+		"../../ext/EverViewport/src",
 		"../../ext/MagicEnum",
 		"../../src",
 		"$(VULKAN_SDK)/include"
@@ -20,6 +21,7 @@ project "VulkanBackend"
 		"$(VULKAN_SDK)/lib/vulkan-1.lib",
 		"$(VULKAN_SDK)/lib/shaderc_shared.lib",
 		"SoftwareCore",
+		"EverViewport",
 		"yaml-cpp"
 	}
 
