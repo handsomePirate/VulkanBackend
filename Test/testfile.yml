@@ -5,9 +5,9 @@ Application:
     # The minimal required version of Vulkan API.
     vulkan-version: 1.2.175
     name: Vulkan Backend Test
-    version: 0.1.0
+    version: 0.1
     engine-name: Test Engine
-    engine-version: 0.1.0
+    engine-version: 0.1
     
 # Instance extensions and layers.
 Instance:
@@ -23,7 +23,7 @@ Instance:
 
 # Device preference and feature customization.
 Device:
-    # Preferred device (will be picked if it is available).
+    # Preferred device (will be picked if it is available and meets requirements - features, api version).
     # TODO: Make this a list.
     preferred: NVIDIA GeForce GTX 970
     preferred-vendor: nvda

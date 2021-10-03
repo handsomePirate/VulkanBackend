@@ -1,19 +1,30 @@
 #include "YAMLConfiguration.hpp"
 #include "VulkanLogger/Logger.hpp"
 #include <Logger/Logger.hpp>
+#include <regex>
 
 Configurator::Version Configurator::VersionFromString(const std::string& version)
 {
-	// TODO: Fool-proof.
-	auto firstDot = version.find('.');
-	std::string majorString = version.substr(0, firstDot);
-	std::string rest = version.substr(firstDot + 1, version.length() - firstDot - 1);
+	std::regex versionAllRegex("[0-9]+\\.[0-9]+\\.[0-9]+");
+	std::regex versionMajorMinorRegex("[0-9]+\\.[0-9]+");
+	if (!std::regex_match(version, versionAllRegex) && !std::regex_match(version, versionMajorMinorRegex))
+	{
+		CoreLogError(VulkanLogger, "Configuration: Wrong version format.");
+		return { 0, 0, 0 };
+	}
 
-	auto secondDot = rest.find('.');
-	std::string minorString = rest.substr(0, secondDot);
-	std::string patchString = rest.substr(secondDot + 1, rest.length() - secondDot - 1);
+	std::regex versionNumberRegex("[0-9]+");
+	std::smatch stringMatches;
+	std::vector<int> versionParts;
+	int m = 0;
+	std::string versionMutable = version;
+	while (std::regex_search(versionMutable, stringMatches, versionNumberRegex))
+	{
+		versionParts.push_back(stoi(stringMatches.str(0)));
+		versionMutable = stringMatches.suffix();
+	}
 
-	return Version{stoi(majorString), stoi(minorString), stoi(patchString)};
+	return Version{ versionParts[0], versionParts[1], versionParts.size() > 2 ? versionParts[2] : 0};
 }
 
 Configurator::ApplicationInfo Configurator::ConfigureApplication(const YAML::Node& applicationData)
@@ -119,6 +130,8 @@ uint32_t Configurator::VendorIdFromString(const std::string& name)
 	{
 		return 0x8086;
 	}
+
+	return 0;
 }
 
 bool Configurator::CheckFeaturesPresent(const VkPhysicalDeviceFeatures& deviceFeatures, const VkPhysicalDeviceProperties& deviceProperties,
@@ -131,5 +144,29 @@ bool Configurator::CheckFeaturesPresent(const VkPhysicalDeviceFeatures& deviceFe
 		return false;
 	}
 
+	if (std::find(requiredFeatures.begin(), requiredFeatures.end(), "geometry shader") != requiredFeatures.end() &&
+		deviceFeatures.geometryShader != VK_TRUE)
+	{
+		return false;
+	}
+
+	if (std::find(requiredFeatures.begin(), requiredFeatures.end(), "sparse binding") != requiredFeatures.end() &&
+		deviceFeatures.sparseBinding != VK_TRUE)
+	{
+		return false;
+	}
+
+	if (std::find(requiredFeatures.begin(), requiredFeatures.end(), "tessellation shader") != requiredFeatures.end() &&
+		deviceFeatures.tessellationShader != VK_TRUE)
+	{
+		return false;
+	}
+
+	if (std::find(requiredFeatures.begin(), requiredFeatures.end(), "wide lines") != requiredFeatures.end() &&
+		deviceFeatures.wideLines != VK_TRUE)
+	{
+		return false;
+	}
+	
 	return true;
 }

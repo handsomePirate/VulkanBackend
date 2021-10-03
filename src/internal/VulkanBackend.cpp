@@ -26,6 +26,8 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 	// Loading YAML configuration file.
 	YAML::Node configData = YAML::LoadFile(configFilePath);
 	
+	// ================================= Instance =================================
+
 	// Retrieving application info from configuration.
 	Configurator::ApplicationInfo applicationInfo;
 	if (configData["Application"])
@@ -123,6 +125,13 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 	// Creating Vulkan instance.
 	VulkanCheck(vkCreateInstance(&instanceCreateInfo, nullptr, &initialized.instance));
 
+	if (!initialized.instance)
+	{
+		return initialized;
+	}
+
+	// ============================== Debug Messenger ==============================
+
 	if (layers.size() > 0)
 	{
 		// Enabling debug messenger if any validation layers are present.
@@ -154,21 +163,27 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 
 	// TODO: Debug object names.
 
+	// ================================== Device ==================================
+
+	// The chosen device and its features and properties.
 	VkPhysicalDevice pickedDevice = VK_NULL_HANDLE;
 	VkPhysicalDeviceProperties pickedDeviceProperties{};
 	VkPhysicalDeviceFeatures pickedDeviceFeatures{};
 
 	if (configData["Device"])
 	{
+		// Querying available devices.
 		uint32_t deviceCount;
 		VulkanCheck(vkEnumeratePhysicalDevices(initialized.instance, &deviceCount, nullptr));
 
 		std::vector<VkPhysicalDevice> devices(deviceCount);
 		VulkanCheck(vkEnumeratePhysicalDevices(initialized.instance, &deviceCount, devices.data()));
 
+		// Assembling required features.
 		std::vector<std::string> requiredFeatures;
 		if (configData["Device"]["features"])
 		{
+			// First reading from the config.
 			std::vector<std::string> requiredFeaturesMessy;
 			for (int f = 0; f < configData["Device"]["features"].size(); ++f)
 			{
@@ -176,6 +191,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 			}
 			requiredFeatures.resize(requiredFeaturesMessy.size());
 
+			// Making the feature strings all in lower case for easier matching.
 			for (int f = 0; f < requiredFeatures.size(); ++f)
 			{
 				requiredFeatures[f].resize(requiredFeaturesMessy[f].length());
@@ -192,19 +208,23 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 		bool foundPreferredDevice = true;
 		if (configData["Device"]["preferred"])
 		{
+			// If preferred device is specified, we will look for it.
 			preferredName = configData["Device"]["preferred"].as<std::string>();
 			foundPreferredDevice = false;
 		}
 		for (int d = 0; d < devices.size(); ++d)
 		{
+			// Retrieving current device properties and features.
 			vkGetPhysicalDeviceProperties(devices[d], &deviceProperties[d]);
 			vkGetPhysicalDeviceFeatures(devices[d], &deviceFeatures[d]);
 			if (!foundPreferredDevice && deviceProperties[d].deviceName == preferredName)
 			{
 				if (deviceProperties[d].apiVersion >= vulkanApplicationInfo.apiVersion)
 				{
+					// If the requested API version is supported by the device, checking required features support.
 					if (Configurator::CheckFeaturesPresent(deviceFeatures[d], deviceProperties[d], requiredFeatures))
 					{
+						// In this case, we found the preferred device and it fits the requirements.
 						pickedDevice = devices[d];
 						pickedDeviceProperties = deviceProperties[d];
 						pickedDeviceFeatures = deviceFeatures[d];
@@ -214,6 +234,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 				}
 				else
 				{
+					// Here, the requested API version was higher than the device supports.
 					int major = VK_API_VERSION_MAJOR(deviceProperties[d].apiVersion);
 					int minor = VK_API_VERSION_MINOR(deviceProperties[d].apiVersion);
 					int patch = VK_API_VERSION_PATCH(deviceProperties[d].apiVersion);
@@ -226,24 +247,22 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 				}
 			}
 
+			// In case the preferred device was not found, we also filter out devices that do not support the requested API.
 			if (deviceProperties[d].apiVersion < vulkanApplicationInfo.apiVersion)
 			{
 				devices[d] = VK_NULL_HANDLE;
 			}
 		}
 
+		// Reporting results from preferred device search.
 		if (!foundPreferredDevice)
 		{
 			CoreLogInfo(VulkanLogger, "Configuration: Preferred device matching requirements could not be found.");
 		}
 
-		if (configData["Device"]["preferred"] && configData["Device"]["preferred-vendor"] && pickedDevice != VK_NULL_HANDLE)
-		{
-			CoreLogInfo(VulkanLogger, "Configuration: Found preferred device that meets requirements; skipping preferred vendor.");
-		}
-
 		if (pickedDevice == VK_NULL_HANDLE)
 		{
+			// If we do not have a device selected, we split the devices into two groups (preferred vendor and the rest).
 			uint32_t preferredVendorId = 0;
 			if (configData["Device"]["preferred-vendor"])
 			{
@@ -276,6 +295,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 				}
 			}
 
+			// Checking the preferred vendor devices first.
 			for (int d = 0; d < preferredDevices.size(); ++d)
 			{
 				if (preferredDevicesProperties[d].apiVersion >= vulkanApplicationInfo.apiVersion)
@@ -293,6 +313,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 
 			if (pickedDevice == VK_NULL_HANDLE)
 			{
+				// Checking the rest of the devices if no suitable preferred vendor device is present.
 				if (preferredVendorId > 0)
 				{
 					CoreLogInfo(VulkanLogger, "Configuration: No suitable devices found from preferred vendor.");
@@ -315,6 +336,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 
 			if (pickedDevice == VK_NULL_HANDLE)
 			{
+				// In case no available device fulfills the requirements, we report a failure and the initialization cannot continue.
 				CoreLogError(VulkanLogger, "Configuration: No suitable devices available - initialization failed.");
 				DestroyInstance(initialized);
 				return initialized;
@@ -355,6 +377,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(
 {
 	::Core::LoggerSeverity severity;
 
+	// Figuring out what severity should the message be.
 	switch (messageSeverity)
 	{
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:

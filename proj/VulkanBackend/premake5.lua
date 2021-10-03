@@ -11,6 +11,7 @@ project "VulkanBackend"
 	includedirs {
 		"../../ext/SoftwareCore/src",
 		"../../ext/yaml/include",
+		"../../ext/MagicEnum",
 		"../../src",
 		"$(VULKAN_SDK)/include"
 	}
