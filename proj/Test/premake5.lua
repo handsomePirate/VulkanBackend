@@ -12,10 +12,12 @@ project "Test"
 		"../../ext/SoftwareCore/src",
 		"../../ext/yaml/include",
 		"../../src",
-		"../../Test/src"
+		"../../Test/src",
+		"$(VULKAN_SDK)/include"
 	}
 	
 	links {
+		"$(VULKAN_SDK)/lib/vulkan-1.lib",
 		"SoftwareCore",
 		"VulkanBackend",
 		"yaml-cpp"

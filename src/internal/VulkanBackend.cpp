@@ -6,11 +6,6 @@
 #include <vulkan/vulkan.hpp>
 #include <yaml-cpp/yaml.h>
 
-::Core::Logger& VulkanBackend::GetLogger()
-{
-	return VulkanLogger;
-}
-
 VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(
 	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 	VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -451,7 +446,9 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 		vkGetDeviceQueue(initialized.logicalDevice, indexMappings[deviceIndex]["general"],
 			currentQueues[indexMappings[deviceIndex]["general"]]++, &initialized.generalQueues[i]);
 	}
+	initialized.generalFamilyIndex = indexMappings[deviceIndex]["general"];
 	
+	initialized.computeFamilyIndex = 0;
 	if (configData["Device"]["queues"]["compute"])
 	{
 		initialized.computeQueues.resize(configData["Device"]["queues"]["compute"].as<int>());
@@ -460,8 +457,10 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 			vkGetDeviceQueue(initialized.logicalDevice, indexMappings[deviceIndex]["compute"],
 				currentQueues[indexMappings[deviceIndex]["compute"]]++, &initialized.computeQueues[i]);
 		}
+		initialized.computeFamilyIndex = indexMappings[deviceIndex]["compute"];
 	}
 
+	initialized.transferFamilyIndex = 0;
 	if (configData["Device"]["queues"]["transfer"])
 	{
 		initialized.transferQueues.resize(configData["Device"]["queues"]["transfer"].as<int>());
@@ -470,6 +469,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 			vkGetDeviceQueue(initialized.logicalDevice, indexMappings[deviceIndex]["transfer"],
 				currentQueues[indexMappings[deviceIndex]["transfer"]]++, &initialized.transferQueues[i]);
 		}
+		initialized.transferFamilyIndex = indexMappings[deviceIndex]["transfer"];
 	}
 
 	if (configData["Device"]["queues"]["present"])
@@ -501,10 +501,144 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 	return initialized;
 }
 
-void VulkanBackend::Destroy(Initialized& initialized)
+void VulkanBackend::Shutdown(Initialized& initialized)
 {
+	initialized.generalFamilyIndex = 0;
+	initialized.computeFamilyIndex = 0;
+	initialized.transferFamilyIndex = 0;
+
+	initialized.generalQueues.clear();
+	initialized.computeQueues.clear();
+	initialized.transferQueues.clear();
+	initialized.presentQueueCandidates.clear();
+
+
 	vkDestroyDevice(initialized.logicalDevice, nullptr);
+	initialized.logicalDevice = VK_NULL_HANDLE;
+	initialized.physicalDevice = VK_NULL_HANDLE;
+
 	DestroyInstance(initialized);
+}
+
+VkFormat VulkanBackend::GetDepthFormat(VkPhysicalDevice device)
+{
+	// Since all depth formats may be optional, we need to find a suitable depth format to use.
+	// Start with the highest precision packed format.
+	std::vector<VkFormat> depthFormats =
+	{
+		VK_FORMAT_D32_SFLOAT_S8_UINT,
+		VK_FORMAT_D32_SFLOAT,
+		VK_FORMAT_D24_UNORM_S8_UINT,
+		VK_FORMAT_D16_UNORM_S8_UINT,
+		VK_FORMAT_D16_UNORM
+	};
+
+	for (auto& format : depthFormats)
+	{
+		VkFormatProperties formatProperties;
+		vkGetPhysicalDeviceFormatProperties(device, format, &formatProperties);
+		// Format must support depth stencil attachment for optimal tiling
+		if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
+		{
+			return format;
+		}
+	}
+
+	return VK_FORMAT_UNDEFINED;
+}
+
+VkSurfaceFormatKHR VulkanBackend::GetSurfaceFormat(VkPhysicalDevice device, VkSurfaceKHR surface)
+{
+	// Get list of supported surface formats
+	uint32_t formatCount;
+	VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, NULL);
+	assert(formatCount > 0 && result == VK_SUCCESS);
+
+	std::vector<VkSurfaceFormatKHR> surfaceFormats(formatCount);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, surfaceFormats.data());
+
+	VkSurfaceFormatKHR surfaceFormat;
+
+	// If the surface format list only includes one entry with VK_FORMAT_UNDEFINED,
+	// there is no preferered format, so we assume VK_FORMAT_B8G8R8A8_UNORM
+	if ((formatCount == 1) && (surfaceFormats[0].format == VK_FORMAT_UNDEFINED))
+	{
+		surfaceFormat.format = VK_FORMAT_B8G8R8A8_UNORM;
+		surfaceFormat.colorSpace = surfaceFormats[0].colorSpace;
+	}
+	else
+	{
+		// iterate over the list of available surface format and
+		// check for the presence of VK_FORMAT_B8G8R8A8_UNORM
+		for (auto&& surfaceFormat : surfaceFormats)
+		{
+			if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_UNORM)
+			{
+				surfaceFormat.format = surfaceFormat.format;
+				surfaceFormat.colorSpace = surfaceFormat.colorSpace;
+				return surfaceFormat;
+			}
+		}
+
+		// in case VK_FORMAT_B8G8R8A8_UNORM is not available
+		// select the first available color format
+		surfaceFormat.format = surfaceFormats[0].format;
+		surfaceFormat.colorSpace = surfaceFormats[0].colorSpace;
+	}
+	return surfaceFormat;
+}
+
+VkPhysicalDeviceMemoryProperties VulkanBackend::GetDeviceMemoryProperties(VkPhysicalDevice device)
+{
+	VkPhysicalDeviceMemoryProperties memoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(device, &memoryProperties);
+	return memoryProperties;
+}
+
+void VulkanBackend::FilterPresentQueues(Initialized& initialized, VkSurfaceKHR surface)
+{
+	int presentQueues = (int)initialized.presentQueueCandidates.size();
+	for (int q = 0; q < initialized.presentQueueCandidates.size(); ++q)
+	{
+		VkBool32 supports;
+		vkGetPhysicalDeviceSurfaceSupportKHR(initialized.physicalDevice, q, surface, &supports);
+
+		if (!supports)
+		{
+			initialized.presentQueueCandidates[q] = VK_NULL_HANDLE;
+			--presentQueues;
+		}
+	}
+
+	if (presentQueues == 0)
+	{
+		CoreLogError(VulkanLogger, "Vulkan: No present-capable queues available.");
+	}
+}
+
+VkQueue VulkanBackend::SelectPresentQueue(const Initialized& initialized)
+{
+	VkQueue generalQueue = initialized.presentQueueCandidates[initialized.generalFamilyIndex];
+
+	if (generalQueue)
+	{
+		return generalQueue;
+	}
+
+	for (int q = 0; q < initialized.presentQueueCandidates.size(); ++q)
+	{
+		if (initialized.presentQueueCandidates[q])
+		{
+			return initialized.presentQueueCandidates[q];
+		}
+	}
+
+	return VK_NULL_HANDLE;
+}
+
+VkQueue VulkanBackend::SelectPresentComputeQueue(const Initialized& initialized)
+{
+	return initialized.presentQueueCandidates[initialized.computeFamilyIndex];
 }
 
 void DestroyInstance(VulkanBackend::Initialized& initialized)
@@ -518,6 +652,7 @@ void DestroyInstance(VulkanBackend::Initialized& initialized)
 		VkDestroyDebugUtilsMessengerEXT(initialized.instance, initialized.debugMessenger, nullptr);
 		initialized.debugMessenger = VK_NULL_HANDLE;
 	}
+
 	// Destroying the instance.
 	vkDestroyInstance(initialized.instance, nullptr);
 	initialized.instance = VK_NULL_HANDLE;

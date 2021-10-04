@@ -30,13 +30,14 @@ void ConsoleOutput(const char* message, ::Core::LoggerSeverity severity)
 
 int main(int argc, char* argv[])
 {
-	VulkanBackend::GetLogger().SetNewOutput(ConsoleOutput);
+	VulkanLogger.SetNewOutput(ConsoleOutput);
 
 	Core::Filesystem filesystem(argv[0]);
 	std::string pathToYamlFile = filesystem.GetAbsolutePath("../../testfile.yml");
 
 	VulkanBackend::Initialized initialized = VulkanBackend::Initialize(pathToYamlFile.c_str());
-	VulkanBackend::Destroy(initialized);
+
+	VulkanBackend::Shutdown(initialized);
 
 	return 0;
 }

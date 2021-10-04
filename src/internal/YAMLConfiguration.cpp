@@ -221,19 +221,6 @@ VkPhysicalDeviceFeatures Configurator::FeaturesFromString(const std::vector<std:
 	return result;
 }
 
-bool Configurator::SwapchainRequired(const std::vector<std::string>& deviceExtensions)
-{
-	std::regex swapchainRegex(".+(_swapchain).*");
-	for (int e = 0; e < deviceExtensions.size(); ++e)
-	{
-		if (std::regex_match(deviceExtensions[e], swapchainRegex))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
 bool Configurator::CheckQueueSupport(const YAML::Node& queueRequirements, const std::vector<VkQueueFamilyProperties>& queueProperties,
 	std::vector<int>& outputIndices, std::map<std::string, int>& queueTypeMapping)
 {

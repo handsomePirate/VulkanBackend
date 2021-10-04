@@ -40,8 +40,6 @@ namespace Configurator
 		const std::vector<std::string>& requiredFeatures);
 	VkPhysicalDeviceFeatures FeaturesFromString(const std::vector<std::string>& requiredFeatures);
 
-	bool SwapchainRequired(const std::vector<std::string>& deviceExtensions);
-
 	bool CheckQueueSupport(const YAML::Node& queueRequirements, const std::vector<VkQueueFamilyProperties>& queueProperties,
 		std::vector<int>& outputIndices, std::map<std::string, int>& queueTypeMapping);
 }
