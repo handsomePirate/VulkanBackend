@@ -7,6 +7,3 @@
 [submodule "ext/yaml"]
 	path = ext/yaml
 	url = git@github.com:handsomePirate/yaml-cpp.git
-[submodule "ext/EverViewport"]
-	path = ext/EverViewport
-	url = git@github.com:handsomePirate/EverViewport.git
