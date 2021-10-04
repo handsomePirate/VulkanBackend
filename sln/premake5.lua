@@ -10,7 +10,6 @@ workspace "VulkanBackend"
 
 group "ext"
 	include "../ext/SoftwareCore/proj/SoftwareCore"
-	include "../ext/EverViewport/proj/EverViewport"
 	include "../ext/yaml"
 group ""
 	

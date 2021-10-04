@@ -32,10 +32,11 @@ Device:
     extensions:
       - VK_KHR_swapchain
     # Requesting queues.
-    # If only graphics is selected, compute and transfer can share it, otherwise the program will attempt to
-    # find distinct ones.
+    # If only general is selected, compute and transfer can share it, otherwise the program will attempt to
+    # find distinct ones. Present does not have a count (only one should be needed) and it gets all queue types
+    # as candidates.
     queues:
-      - graphics: 1
-      - compute: 1
-      - transfer: 1
-      - present
+        general: 1
+        transfer: 1
+        compute: 1
+        present

@@ -42,11 +42,6 @@ namespace Configurator
 
 	bool SwapchainRequired(const std::vector<std::string>& deviceExtensions);
 
-	bool CheckQueueSupport(const std::vector<std::pair<std::string, int>>& queueRequirements,
-		const std::vector<VkQueueFamilyProperties>& queueProperties,
-		const std::vector<VkBool32>& queueSupportsPresent,
-		std::vector<int>& outputIndices);
-
-	void ConsolidateQueues(const std::vector<std::pair<std::string, int>>& queueRequirements,
-		const std::vector<int>& outputIndices, std::vector<int>& queueIndices, const std::string& queueName);
+	bool CheckQueueSupport(const YAML::Node& queueRequirements, const std::vector<VkQueueFamilyProperties>& queueProperties,
+		std::vector<int>& outputIndices, std::map<std::string, int>& queueTypeMapping);
 }

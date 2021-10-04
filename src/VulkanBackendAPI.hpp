@@ -20,10 +20,10 @@ namespace VulkanBackend
 		VkDebugUtilsMessengerEXT debugMessenger;
 		VkPhysicalDevice physicalDevice;
 		VkDevice logicalDevice;
-		std::vector<VkQueue> graphicsQueues;
+		std::vector<VkQueue> generalQueues;
 		std::vector<VkQueue> computeQueues;
 		std::vector<VkQueue> transferQueues;
-		std::vector<VkQueue> presentQueues;
+		std::vector<VkQueue> presentQueueCandidates;
 	};
 
 	Initialized Initialize(const char* configFilePath);

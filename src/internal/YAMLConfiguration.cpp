@@ -234,109 +234,81 @@ bool Configurator::SwapchainRequired(const std::vector<std::string>& deviceExten
 	return false;
 }
 
-bool Configurator::CheckQueueSupport(const std::vector<std::pair<std::string, int>>& queueRequirements,
-	const std::vector<VkQueueFamilyProperties>& queueProperties,
-	const std::vector<VkBool32>& queueSupportsPresent,
-	std::vector<int>& outputIndices)
+bool Configurator::CheckQueueSupport(const YAML::Node& queueRequirements, const std::vector<VkQueueFamilyProperties>& queueProperties,
+	std::vector<int>& outputIndices, std::map<std::string, int>& queueTypeMapping)
 {
-	// TODO: Queues from the same family still count as distinct. - No need to get distinct families as well.
-	
-	std::vector<int> queuesRemaining;
-	std::vector<bool> taken;
+	// Find general, transfer and compute async.
+	// We don't check for present since we don't have the info now.
+	queueTypeMapping["transfer"] = INT32_MAX;
+	queueTypeMapping["compute"] = INT32_MAX;
 	for (int q = 0; q < queueProperties.size(); ++q)
 	{
-		taken.push_back(false);
-		queuesRemaining.push_back(queueProperties[q].queueCount);
-	}
-
-	std::vector<int> graphicsIndices;
-	std::vector<int> computeIndices;
-	std::vector<int> transferIndices;
-	std::vector<int> presentIndices;
-	for (int q = 0; q < queueProperties.size(); ++q)
-	{
-		if (queueProperties[q].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		if (((queueProperties[q].queueFlags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT)) == 
+			(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT)))
 		{
-			graphicsIndices.push_back(q);
+			queueTypeMapping["general"] = q;
 		}
-		if (queueProperties[q].queueFlags & VK_QUEUE_COMPUTE_BIT)
+		else if (queueProperties[q].queueFlags & VK_QUEUE_COMPUTE_BIT)
 		{
-			computeIndices.push_back(q);
+			queueTypeMapping["compute"] = q;
 		}
-		if (queueProperties[q].queueFlags & VK_QUEUE_TRANSFER_BIT)
+		else if (queueProperties[q].queueFlags & VK_QUEUE_TRANSFER_BIT)
 		{
-			transferIndices.push_back(q);
-		}
-		if (queueSupportsPresent[q])
-		{
-			presentIndices.push_back(q);
+			queueTypeMapping["transfer"] = q;
 		}
 	}
 
-	auto queueFunc = [&](const std::vector<int>& indices, int qr, bool& found)
-		-> int
+	// Assume outputIndices are correctly resized and initialized to 0.
+	const int general = queueTypeMapping["general"];
+	const int compute = queueTypeMapping["compute"] == INT32_MAX ? queueTypeMapping["general"] : queueTypeMapping["compute"];
+	const int transfer = queueTypeMapping["transfer"] == INT32_MAX ? queueTypeMapping["general"] : queueTypeMapping["transfer"];
+
+	queueTypeMapping["compute"] = queueTypeMapping["compute"] == INT32_MAX ? queueTypeMapping["general"] : queueTypeMapping["compute"];
+	queueTypeMapping["transfer"] = queueTypeMapping["transfer"] == INT32_MAX ? queueTypeMapping["general"] : queueTypeMapping["transfer"];
+
+	std::vector<uint32_t> allocatedQueues(queueProperties.size());
+	memset(allocatedQueues.data(), 0, sizeof(uint32_t) * allocatedQueues.size());
+
+	auto nodeType = queueRequirements.Type();
+
+	if (queueRequirements["general"])
 	{
-		for (int i = 0; i < indices.size(); ++i)
+		if (queueProperties[general].queueCount >= allocatedQueues[general])
 		{
-			if (queuesRemaining[indices[i]] >= queueRequirements[qr].second &&
-				!taken[indices[i]])
-			{
-				queuesRemaining[indices[i]] -= queueRequirements[qr].second;
-				taken[indices[i]] = true;
-				found = true;
-				return indices[i];
-			}
+			outputIndices[general] += queueRequirements["general"].as<int>();
+			allocatedQueues[general] += queueRequirements["general"].as<int>();
 		}
-		for (int i = 0; i < indices.size(); ++i)
+		else
 		{
-			if (queuesRemaining[indices[i]] >= queueRequirements[qr].second)
-			{
-				queuesRemaining[indices[i]] -= queueRequirements[qr].second;
-				found = true;
-				return indices[i];
-			}
+			return false;
 		}
-	};
+	}
 
-	outputIndices.resize(queueRequirements.size());
-
-	for (int qr = 0; qr < queueRequirements.size(); ++qr)
+	if (queueRequirements["transfer"])
 	{
-		bool found = false;
-		if (queueRequirements[qr].first == "graphics")
+		if (queueProperties[transfer].queueCount >= allocatedQueues[transfer])
 		{
-			outputIndices[qr] = queueFunc(graphicsIndices, qr, found);
+			outputIndices[transfer] += queueRequirements["transfer"].as<int>();
+			allocatedQueues[transfer] += queueRequirements["transfer"].as<int>();
 		}
-		else if (queueRequirements[qr].first == "compute")
+		else
 		{
-			outputIndices[qr] = queueFunc(computeIndices, qr, found);
+			return false;
 		}
-		else if (queueRequirements[qr].first == "transfer")
-		{
-			outputIndices[qr] = queueFunc(transferIndices, qr, found);
-		}
-		else if (queueRequirements[qr].first == "present")
-		{
-			outputIndices[qr] = queueFunc(presentIndices, qr, found);
-		}
+	}
 
-		if (!found)
+	if (queueRequirements["compute"])
+	{
+		if (queueProperties[compute].queueCount >= allocatedQueues[compute])
+		{
+			outputIndices[compute] += queueRequirements["compute"].as<int>();
+			allocatedQueues[compute] += queueRequirements["compute"].as<int>();
+		}
+		else
 		{
 			return false;
 		}
 	}
 
 	return true;
-}
-
-void Configurator::ConsolidateQueues(const std::vector<std::pair<std::string, int>>& queueRequirements, const std::vector<int>& outputIndices,
-	std::vector<int>& queueIndices, const std::string& queueName)
-{
-	for (int qr = 0; qr < queueRequirements.size(); ++qr)
-	{
-		if (queueRequirements[qr].first == queueName)
-		{
-			queueIndices.push_back(outputIndices[qr]);
-		}
-	}
 }
