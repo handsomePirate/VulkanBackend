@@ -1,7 +1,7 @@
 #ifdef __linux__
 
-#include "../VulkanBackendAPI.hpp"
-#include "internal/ErrorCheck.hpp"
+#include "VulkanBackend/VulkanBackendAPI.hpp"
+#include "../ErrorCheck.hpp"
 
 #include <X11/Xlib.h>
 #include <vulkan/vulkan_xlib.h>

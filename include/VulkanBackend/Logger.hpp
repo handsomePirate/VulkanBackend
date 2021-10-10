@@ -1,5 +1,5 @@
 #pragma once
-#include <Singleton/Singleton.hpp>
-#include <Logger/Logger.hpp>
+#include <SoftwareCore/Singleton.hpp>
+#include <SoftwareCore/Logger.hpp>
 
 #define VulkanLogger ::Core::Singleton<::Core::Logger>::GetInstance()

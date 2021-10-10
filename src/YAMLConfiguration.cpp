@@ -1,6 +1,6 @@
 #include "YAMLConfiguration.hpp"
-#include "VulkanLogger/Logger.hpp"
-#include <Logger/Logger.hpp>
+#include "VulkanBackend/Logger.hpp"
+#include <SoftwareCore/Logger.hpp>
 #include <regex>
 
 Configurator::Version Configurator::VersionFromString(const std::string& version)

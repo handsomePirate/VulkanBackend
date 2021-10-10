@@ -1,7 +1,7 @@
 #ifdef _WIN32
 
-#include "../VulkanBackendAPI.hpp"
-#include "internal/ErrorCheck.hpp"
+#include "VulkanBackend/VulkanBackendAPI.hpp"
+#include "../ErrorCheck.hpp"
 
 #include <Windows.h>
 #include <vulkan/vulkan_win32.h>

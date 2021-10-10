@@ -1,3 +1,5 @@
+VulkanBackendInclude = path.getabsolute("../../include", os.getcwd())
+
 project "VulkanBackend"
 	kind "StaticLib"
 	staticruntime "off"
@@ -6,14 +8,14 @@ project "VulkanBackend"
 	location ""
 	targetdir "../../build/%{cfg.buildcfg}"
 	objdir "obj/%{cfg.buildcfg}"
-	files { "../../src/**.hpp", "../../src/**.cpp" }
+	files { "../../src/**.hpp", "../../src/**.cpp", "../../include/**.hpp" }
 	
 	includedirs {
-		"../../ext/SoftwareCore/src",
-		"../../ext/yaml/include",
+		"$(VULKAN_SDK)/include",
+		YamlInclude,
+		SoftwareCoreInclude,
 		"../../ext/MagicEnum",
-		"../../src",
-		"$(VULKAN_SDK)/include"
+		VulkanBackendInclude
 	}
 	
 	links {

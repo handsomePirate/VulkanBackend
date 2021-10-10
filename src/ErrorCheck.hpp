@@ -1,7 +1,6 @@
-//#include<vulkan/vulkan.hpp>
-#include "VulkanLogger/Logger.hpp"
-#include <Logger/Logger.hpp>
-#include <MagicEnum.hpp>
+#include "VulkanBackend/Logger.hpp"
+#include <SoftwareCore/Logger.hpp>
+#include <MagicEnum/MagicEnum.hpp>
 
 #define VulkanCheck(e)\
 {\

@@ -1,8 +1,8 @@
-#include "../VulkanBackendAPI.hpp"
+#include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "YAMLConfiguration.hpp"
 #include "ErrorCheck.hpp"
-#include "VulkanLogger/Logger.hpp"
-#include <Logger/Logger.hpp>
+#include "VulkanBackend/Logger.hpp"
+#include <SoftwareCore/Logger.hpp>
 #include <vulkan/vulkan.hpp>
 #include <yaml-cpp/yaml.h>
 

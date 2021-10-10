@@ -9,18 +9,17 @@ project "Test"
 	files { "../../Test/src/**.hpp", "../../Test/src/**.cpp" }
 	
 	includedirs {
-		"../../ext/SoftwareCore/src",
-		"../../ext/yaml/include",
-		"../../src",
-		"../../Test/src",
-		"$(VULKAN_SDK)/include"
+		"$(VULKAN_SDK)/include",
+		SoftwareCoreInclude,
+		YamlInclude,
+		VulkanBackendInclude
 	}
 	
 	links {
 		"$(VULKAN_SDK)/lib/vulkan-1.lib",
 		"SoftwareCore",
-		"VulkanBackend",
-		"yaml-cpp"
+		"yaml-cpp",
+		"VulkanBackend"
 	}
 	
 	filter "system:windows"

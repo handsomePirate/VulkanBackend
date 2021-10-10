@@ -1,6 +1,6 @@
 #include <yaml-cpp/yaml.h>
-#include <VulkanBackendAPI.hpp>
-#include <Filesystem/Filesystem.hpp>
+#include <VulkanBackend/VulkanBackendAPI.hpp>
+#include <SoftwareCore/Filesystem.hpp>
 #include <iostream>
 
 void ConsoleOutput(const char* message, ::Core::LoggerSeverity severity)

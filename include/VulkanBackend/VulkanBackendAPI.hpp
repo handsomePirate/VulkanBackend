@@ -1,6 +1,6 @@
 #pragma once
-#include "VulkanLogger/Logger.hpp"
-#include <Logger/Logger.hpp>
+#include "Logger.hpp"
+#include <SoftwareCore/Logger.hpp>
 #include <vulkan/vulkan_core.h>
 
 namespace VulkanBackend
