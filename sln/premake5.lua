@@ -7,11 +7,8 @@ workspace "VulkanBackend"
 	{
 		"MultiProcessorCompile"
 	}
-
-group "ext"
-	include "../ext/SoftwareCore/proj/SoftwareCore"
-	include "../ext/yaml"
-group ""
+	
+include "../dependencies.lua"
 	
 include "../proj/VulkanBackend"
 include "../proj/Test"
