@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 	Core::Filesystem filesystem(argv[0]);
 	std::string pathToYamlFile = filesystem.GetAbsolutePath("../../testfile.yml");
 
-	VulkanBackend::Initialized initialized = VulkanBackend::Initialize(pathToYamlFile.c_str());
+	VulkanBackend::BackendData initialized = VulkanBackend::Initialize(pathToYamlFile.c_str());
 
 	VulkanBackend::Shutdown(initialized);
 

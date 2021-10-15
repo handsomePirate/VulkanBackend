@@ -5,7 +5,9 @@
 
 namespace VulkanBackend
 {
-	struct Initialized
+	// ======================== Backend ========================
+
+	struct BackendData
 	{
 		VkInstance instance;
 		VkDebugUtilsMessengerEXT debugMessenger;
@@ -20,22 +22,44 @@ namespace VulkanBackend
 		std::vector<VkQueue> presentQueueCandidates;
 	};
 
-	// ======================== Backend ========================
+	BackendData Initialize(const char* configFilePath);
+	void Shutdown(BackendData& backendData);
 
-	Initialized Initialize(const char* configFilePath);
-	void Shutdown(Initialized& initialized);
+	// ======================== Surface ========================
 
-	VkSurfaceKHR CreateSurface(VkInstance instance, void* windowHandle, void* connection);
+	struct SurfaceData
+	{
+		VkSurfaceKHR surface;
+		std::vector<VkQueue> presentQueues;
+		VkQueue defaultPresentQueue;
+		VkQueue computePresentQueue;
+		VkFormat depthFormat;
+		VkSurfaceFormatKHR surfaceFormat;
+		VkSurfaceCapabilitiesKHR surfaceCapabilities;
+		VkSurfaceTransformFlagBitsKHR surfaceTransform;
+		VkCompositeAlphaFlagBitsKHR compositeAlpha;
+		VkPresentModeKHR presentMode;
+		VkExtent2D surfaceExtent;
+		uint32_t width;
+		uint32_t height;
+		uint32_t swapchainImageCount;
+	};
 
-	VkFormat GetDepthFormat(VkPhysicalDevice device);
-	VkSurfaceFormatKHR GetSurfaceFormat(VkPhysicalDevice device, VkSurfaceKHR surface);
+	void CreateSurface(VkInstance instance, SurfaceData& surfaceData, void* windowHandle, void* connection);
+
+	void GetDepthFormat(VkPhysicalDevice device, SurfaceData& surfaceData);
+	void GetSurfaceFormat(VkPhysicalDevice device, SurfaceData& surfaceData);
+	void GetSurfaceCapabilities(VkPhysicalDevice device, SurfaceData& surfaceData);
+	void GetSurfaceExtent(VkPhysicalDevice device, SurfaceData& surfaceData);
+	void GetPresentMode(VkPhysicalDevice device, SurfaceData& surfaceData, bool vSync = false);
+	void GetSwapchainImageCount(SurfaceData& surfaceData);
 
 	VkPhysicalDeviceMemoryProperties GetDeviceMemoryProperties(VkPhysicalDevice device);
 
-	void FilterPresentQueues(Initialized& initialized, VkSurfaceKHR surface);
+	void FilterPresentQueues(const BackendData& backendData, SurfaceData& surfaceData);
 	// These (Select functions) should be used only after the present queue candidates have been filtered.
-	VkQueue SelectPresentQueue(const Initialized& initialized);
-	VkQueue SelectPresentComputeQueue(const Initialized& initialized);
+	void SelectPresentQueue(const BackendData& backendData, SurfaceData& surfaceData);
+	void SelectPresentComputeQueue(const BackendData& backendData, SurfaceData& surfaceData);
 
 	// ======================== Commands =======================
 
@@ -93,11 +117,32 @@ namespace VulkanBackend
 
 	// ====================== Presentation =====================
 
-	VkSwapchainKHR CreateSwapchain(VkDevice device, uint32_t width, uint32_t height, VkSurfaceKHR surface);
-	VkSwapchainKHR RecreateSwapchain(VkDevice device, uint32_t width, uint32_t height, VkSurfaceKHR surface, VkSwapchainKHR& oldSwapchain);
+	VkSwapchainKHR CreateSwapchain(const BackendData& backendData, uint32_t width, uint32_t height, const SurfaceData& surfaceData,
+		VkImageUsageFlags imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE);
+	VkSwapchainKHR RecreateSwapchain(const BackendData& backendData, uint32_t width, uint32_t height, const SurfaceData& surfaceData,
+		VkSwapchainKHR& oldSwapchain, VkImageUsageFlags imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE);
 	void DestroySwapchain(VkDevice device, VkSwapchainKHR swapchain);
 
-	//pipeline
+	// ======================== Pipeline =======================
+
+	VkRenderPass CreateRenderPass(VkDevice device, const SurfaceData& surfaceData);
+	void DestroyRenderPass(VkDevice device, VkRenderPass renderPass);
+
+	VkPipelineCache CreatePipelineCache(VkDevice device);
+	void DestroyPipelineCache(VkDevice device, VkPipelineCache pipelineCache);
+
+	VkPipelineLayout CreatePipelineLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, VkPushConstantRange pushConstantRange);
+	void DestroyPipelineLayout(VkDevice device, VkPipelineLayout pipelineLayout);
+
+	VkPipeline CreateGraphicsPipeline(VkDevice device, VkPrimitiveTopology primitiveTopology, VkPolygonMode polygonMode,
+		VkCullModeFlags cullMode, VkFrontFace frontFace, VkColorComponentFlags colorComponents, VkBool32 depthTestEnable,
+		VkBool32 depthWriteEnable, VkCompareOp compareOp, VkSampleCountFlagBits sampleCount, const std::vector<VkDynamicState>& dynamicStates,
+		VkPipelineVertexInputStateCreateInfo& vertexInputState, VkRenderPass renderPass, VkPipelineLayout pipelineLayout,
+		const std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkPipelineCache pipelineCache = VK_NULL_HANDLE);
+	//VkPipeline CreateComputePipeline();
+	void DestroyPipeline(VkDevice device, VkPipeline pipeline);
+
 	//framebuffer
 	//descriptors
 	//shaders

@@ -12,9 +12,9 @@ VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData);
 
-void DestroyInstance(VulkanBackend::Initialized& initialized);
+void DestroyInstance(VulkanBackend::BackendData& backendData);
 
-VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
+VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 {
 	// TODO: Allocator.
 
@@ -115,14 +115,14 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 	instanceCreateInfo.ppEnabledExtensionNames = extensionsChar.data();
 	instanceCreateInfo.enabledExtensionCount = (uint32_t)extensionsChar.size();
 
-	Initialized initialized{};
+	BackendData backendData{};
 
 	// Creating Vulkan instance.
-	VulkanCheck(vkCreateInstance(&instanceCreateInfo, nullptr, &initialized.instance));
+	VulkanCheck(vkCreateInstance(&instanceCreateInfo, nullptr, &backendData.instance));
 
-	if (!initialized.instance)
+	if (!backendData.instance)
 	{
-		return initialized;
+		return backendData;
 	}
 
 	// ============================== Debug Messenger ==============================
@@ -131,7 +131,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 	{
 		// Enabling debug messenger if any validation layers are present.
 		auto VkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
-			vkGetInstanceProcAddr(initialized.instance, "vkCreateDebugUtilsMessengerEXT"));
+			vkGetInstanceProcAddr(backendData.instance, "vkCreateDebugUtilsMessengerEXT"));
 
 		if (VkCreateDebugUtilsMessengerEXT)
 		{
@@ -147,7 +147,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 				VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
 				VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
 			debugUtilsMessengerCreateInfo.pfnUserCallback = ValidationCallback;
-			VulkanCheck(VkCreateDebugUtilsMessengerEXT(initialized.instance, &debugUtilsMessengerCreateInfo, nullptr, &initialized.debugMessenger));
+			VulkanCheck(VkCreateDebugUtilsMessengerEXT(backendData.instance, &debugUtilsMessengerCreateInfo, nullptr, &backendData.debugMessenger));
 		}
 		else
 		{
@@ -193,10 +193,10 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 	{
 		// Querying available devices.
 		uint32_t deviceCount;
-		VulkanCheck(vkEnumeratePhysicalDevices(initialized.instance, &deviceCount, nullptr));
+		VulkanCheck(vkEnumeratePhysicalDevices(backendData.instance, &deviceCount, nullptr));
 
 		std::vector<VkPhysicalDevice> devices(deviceCount);
-		VulkanCheck(vkEnumeratePhysicalDevices(initialized.instance, &deviceCount, devices.data()));
+		VulkanCheck(vkEnumeratePhysicalDevices(backendData.instance, &deviceCount, devices.data()));
 
 		// Assembling required features.
 		std::vector<std::string> requiredFeatures;
@@ -261,7 +261,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 						Configurator::CheckQueueSupport(configData["Device"]["queues"], queueProperties[d], outputIndices[d], indexMappings[d]))
 					{
 						// In this case, we found the preferred device and it fits the requirements.
-						initialized.physicalDevice = devices[d];
+						backendData.physicalDevice = devices[d];
 						pickedDeviceProperties = deviceProperties[d];
 						pickedDeviceFeatures = deviceFeatures[d];
 						foundPreferredDevice = true;
@@ -298,7 +298,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 			CoreLogInfo(VulkanLogger, "Configuration: Preferred device matching requirements could not be found.");
 		}
 
-		if (initialized.physicalDevice == VK_NULL_HANDLE)
+		if (backendData.physicalDevice == VK_NULL_HANDLE)
 		{
 			// If we do not have a device selected, we split the devices into two groups (preferred vendor and the rest).
 			uint32_t preferredVendorId = 0;
@@ -341,7 +341,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 					if (Configurator::CheckFeaturesPresent(preferredDevicesFeatures[d], preferredDevicesProperties[d], requiredFeatures) &&
 						Configurator::CheckQueueSupport(configData["Device"]["queues"], queueProperties[d], outputIndices[d], indexMappings[d]))
 					{
-						initialized.physicalDevice = preferredDevices[d];
+						backendData.physicalDevice = preferredDevices[d];
 						pickedDeviceProperties = preferredDevicesProperties[d];
 						pickedDeviceFeatures = preferredDevicesFeatures[d];
 						deviceIndex = d;
@@ -352,7 +352,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 				}
 			}
 
-			if (initialized.physicalDevice == VK_NULL_HANDLE)
+			if (backendData.physicalDevice == VK_NULL_HANDLE)
 			{
 				// Checking the rest of the devices if no suitable preferred vendor device is present.
 				if (preferredVendorId > 0)
@@ -366,7 +366,7 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 						if (Configurator::CheckFeaturesPresent(otherDevicesFeatures[d], otherDevicesProperties[d], requiredFeatures) &&
 							Configurator::CheckQueueSupport(configData["Device"]["queues"], queueProperties[d], outputIndices[d], indexMappings[d]))
 						{
-							initialized.physicalDevice = otherDevices[d];
+							backendData.physicalDevice = otherDevices[d];
 							pickedDeviceProperties = otherDevicesProperties[d];
 							pickedDeviceFeatures = otherDevicesFeatures[d];
 							deviceIndex = d;
@@ -378,12 +378,12 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 				}
 			}
 
-			if (initialized.physicalDevice == VK_NULL_HANDLE)
+			if (backendData.physicalDevice == VK_NULL_HANDLE)
 			{
 				// In case no available device fulfills the requirements, we report a failure and the initialization cannot continue.
 				CoreLogError(VulkanLogger, "Configuration: No suitable devices available - initialization failed.");
-				DestroyInstance(initialized);
-				return initialized;
+				DestroyInstance(backendData);
+				return backendData;
 			}
 		}
 	}
@@ -436,91 +436,91 @@ VulkanBackend::Initialized VulkanBackend::Initialize(const char* configFilePath)
 	deviceCreateInfo.pQueueCreateInfos = deviceQueueCreateInfos.data();
 	deviceCreateInfo.queueCreateInfoCount = (uint32_t)deviceQueueCreateInfos.size();
 
-	VulkanCheck(vkCreateDevice(initialized.physicalDevice, &deviceCreateInfo, nullptr, &initialized.logicalDevice));
+	VulkanCheck(vkCreateDevice(backendData.physicalDevice, &deviceCreateInfo, nullptr, &backendData.logicalDevice));
 
 	std::vector<int> currentQueues(outputIndices[deviceIndex].size());
 
-	initialized.generalQueues.resize(configData["Device"]["queues"]["general"].as<int>());
-	for (int i = 0; i < initialized.generalQueues.size(); ++i)
+	backendData.generalQueues.resize(configData["Device"]["queues"]["general"].as<int>());
+	for (int i = 0; i < backendData.generalQueues.size(); ++i)
 	{
-		vkGetDeviceQueue(initialized.logicalDevice, indexMappings[deviceIndex]["general"],
-			currentQueues[indexMappings[deviceIndex]["general"]]++, &initialized.generalQueues[i]);
+		vkGetDeviceQueue(backendData.logicalDevice, indexMappings[deviceIndex]["general"],
+			currentQueues[indexMappings[deviceIndex]["general"]]++, &backendData.generalQueues[i]);
 	}
-	initialized.generalFamilyIndex = indexMappings[deviceIndex]["general"];
+	backendData.generalFamilyIndex = indexMappings[deviceIndex]["general"];
 	
-	initialized.computeFamilyIndex = 0;
+	backendData.computeFamilyIndex = 0;
 	if (configData["Device"]["queues"]["compute"])
 	{
-		initialized.computeQueues.resize(configData["Device"]["queues"]["compute"].as<int>());
-		for (int i = 0; i < initialized.generalQueues.size(); ++i)
+		backendData.computeQueues.resize(configData["Device"]["queues"]["compute"].as<int>());
+		for (int i = 0; i < backendData.generalQueues.size(); ++i)
 		{
-			vkGetDeviceQueue(initialized.logicalDevice, indexMappings[deviceIndex]["compute"],
-				currentQueues[indexMappings[deviceIndex]["compute"]]++, &initialized.computeQueues[i]);
+			vkGetDeviceQueue(backendData.logicalDevice, indexMappings[deviceIndex]["compute"],
+				currentQueues[indexMappings[deviceIndex]["compute"]]++, &backendData.computeQueues[i]);
 		}
-		initialized.computeFamilyIndex = indexMappings[deviceIndex]["compute"];
+		backendData.computeFamilyIndex = indexMappings[deviceIndex]["compute"];
 	}
 
-	initialized.transferFamilyIndex = 0;
+	backendData.transferFamilyIndex = 0;
 	if (configData["Device"]["queues"]["transfer"])
 	{
-		initialized.transferQueues.resize(configData["Device"]["queues"]["transfer"].as<int>());
-		for (int i = 0; i < initialized.transferQueues.size(); ++i)
+		backendData.transferQueues.resize(configData["Device"]["queues"]["transfer"].as<int>());
+		for (int i = 0; i < backendData.transferQueues.size(); ++i)
 		{
-			vkGetDeviceQueue(initialized.logicalDevice, indexMappings[deviceIndex]["transfer"],
-				currentQueues[indexMappings[deviceIndex]["transfer"]]++, &initialized.transferQueues[i]);
+			vkGetDeviceQueue(backendData.logicalDevice, indexMappings[deviceIndex]["transfer"],
+				currentQueues[indexMappings[deviceIndex]["transfer"]]++, &backendData.transferQueues[i]);
 		}
-		initialized.transferFamilyIndex = indexMappings[deviceIndex]["transfer"];
+		backendData.transferFamilyIndex = indexMappings[deviceIndex]["transfer"];
 	}
 
 	if (configData["Device"]["queues"]["present"])
 	{
-		initialized.presentQueueCandidates.resize(currentQueues.size());
-		for (int i = 0; i < initialized.presentQueueCandidates.size(); ++i)
+		backendData.presentQueueCandidates.resize(currentQueues.size());
+		for (int i = 0; i < backendData.presentQueueCandidates.size(); ++i)
 		{
 			if (i == indexMappings[deviceIndex]["general"])
 			{
-				initialized.presentQueueCandidates[i] = initialized.generalQueues[0];
+				backendData.presentQueueCandidates[i] = backendData.generalQueues[0];
 			}
-			else if (i == indexMappings[deviceIndex]["transfer"] && initialized.transferQueues.size() > 0)
+			else if (i == indexMappings[deviceIndex]["transfer"] && backendData.transferQueues.size() > 0)
 			{
-				initialized.presentQueueCandidates[i] = initialized.transferQueues[0];
+				backendData.presentQueueCandidates[i] = backendData.transferQueues[0];
 			}
-			else if (i == indexMappings[deviceIndex]["compute"] && initialized.computeQueues.size() > 0)
+			else if (i == indexMappings[deviceIndex]["compute"] && backendData.computeQueues.size() > 0)
 			{
-				initialized.presentQueueCandidates[i] = initialized.computeQueues[0];
+				backendData.presentQueueCandidates[i] = backendData.computeQueues[0];
 			}
 			else
 			{
-				vkGetDeviceQueue(initialized.logicalDevice, i,
-					currentQueues[i]++, &initialized.presentQueueCandidates[i]);
+				vkGetDeviceQueue(backendData.logicalDevice, i,
+					currentQueues[i]++, &backendData.presentQueueCandidates[i]);
 			}
 		}
 	}
 	
 	// Returning the initialized Vulkan structures.
-	return initialized;
+	return backendData;
 }
 
-void VulkanBackend::Shutdown(Initialized& initialized)
+void VulkanBackend::Shutdown(BackendData& backendData)
 {
-	initialized.generalFamilyIndex = 0;
-	initialized.computeFamilyIndex = 0;
-	initialized.transferFamilyIndex = 0;
+	backendData.generalFamilyIndex = 0;
+	backendData.computeFamilyIndex = 0;
+	backendData.transferFamilyIndex = 0;
+	
+	backendData.generalQueues.clear();
+	backendData.computeQueues.clear();
+	backendData.transferQueues.clear();
+	backendData.presentQueueCandidates.clear();
 
-	initialized.generalQueues.clear();
-	initialized.computeQueues.clear();
-	initialized.transferQueues.clear();
-	initialized.presentQueueCandidates.clear();
 
+	vkDestroyDevice(backendData.logicalDevice, nullptr);
+	backendData.logicalDevice = VK_NULL_HANDLE;
+	backendData.physicalDevice = VK_NULL_HANDLE;
 
-	vkDestroyDevice(initialized.logicalDevice, nullptr);
-	initialized.logicalDevice = VK_NULL_HANDLE;
-	initialized.physicalDevice = VK_NULL_HANDLE;
-
-	DestroyInstance(initialized);
+	DestroyInstance(backendData);
 }
 
-VkFormat VulkanBackend::GetDepthFormat(VkPhysicalDevice device)
+void VulkanBackend::GetDepthFormat(VkPhysicalDevice device, SurfaceData& surfaceData)
 {
 	// Since all depth formats may be optional, we need to find a suitable depth format to use.
 	// Start with the highest precision packed format.
@@ -540,31 +540,33 @@ VkFormat VulkanBackend::GetDepthFormat(VkPhysicalDevice device)
 		// Format must support depth stencil attachment for optimal tiling
 		if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
 		{
-			return format;
+			surfaceData.depthFormat = format;
+			return;
 		}
 	}
 
-	return VK_FORMAT_UNDEFINED;
+	surfaceData.depthFormat = VK_FORMAT_UNDEFINED;
 }
 
-VkSurfaceFormatKHR VulkanBackend::GetSurfaceFormat(VkPhysicalDevice device, VkSurfaceKHR surface)
+void VulkanBackend::GetSurfaceFormat(VkPhysicalDevice device, SurfaceData& surfaceData)
 {
 	// Get list of supported surface formats
 	uint32_t formatCount;
-	VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, NULL);
-	assert(formatCount > 0 && result == VK_SUCCESS);
+	VulkanCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(device, surfaceData.surface, &formatCount, NULL));
+	if (formatCount == 0)
+	{
+		CoreLogError(VulkanLogger, "Vulkan: Couldn't find a surface format.");
+	}
 
 	std::vector<VkSurfaceFormatKHR> surfaceFormats(formatCount);
-	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, surfaceFormats.data());
-
-	VkSurfaceFormatKHR surfaceFormat;
+	VulkanCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(device, surfaceData.surface, &formatCount, surfaceFormats.data()));
 
 	// If the surface format list only includes one entry with VK_FORMAT_UNDEFINED,
 	// there is no preferered format, so we assume VK_FORMAT_B8G8R8A8_UNORM
 	if ((formatCount == 1) && (surfaceFormats[0].format == VK_FORMAT_UNDEFINED))
 	{
-		surfaceFormat.format = VK_FORMAT_B8G8R8A8_UNORM;
-		surfaceFormat.colorSpace = surfaceFormats[0].colorSpace;
+		surfaceData.surfaceFormat.format = VK_FORMAT_B8G8R8A8_UNORM;
+		surfaceData.surfaceFormat.colorSpace = surfaceFormats[0].colorSpace;
 	}
 	else
 	{
@@ -574,18 +576,106 @@ VkSurfaceFormatKHR VulkanBackend::GetSurfaceFormat(VkPhysicalDevice device, VkSu
 		{
 			if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_UNORM)
 			{
-				surfaceFormat.format = surfaceFormat.format;
-				surfaceFormat.colorSpace = surfaceFormat.colorSpace;
-				return surfaceFormat;
+				surfaceData.surfaceFormat.format = surfaceFormat.format;
+				surfaceData.surfaceFormat.colorSpace = surfaceFormat.colorSpace;
+				return;
 			}
 		}
 
 		// in case VK_FORMAT_B8G8R8A8_UNORM is not available
 		// select the first available color format
-		surfaceFormat.format = surfaceFormats[0].format;
-		surfaceFormat.colorSpace = surfaceFormats[0].colorSpace;
+		surfaceData.surfaceFormat.format = surfaceFormats[0].format;
+		surfaceData.surfaceFormat.colorSpace = surfaceFormats[0].colorSpace;
 	}
-	return surfaceFormat;
+}
+
+void VulkanBackend::GetSurfaceCapabilities(VkPhysicalDevice device, SurfaceData& surfaceData)
+{
+	VulkanCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surfaceData.surface, &surfaceData.surfaceCapabilities));
+
+	if (surfaceData.surfaceCapabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
+	{
+		// We prefer a non-rotated transform
+		surfaceData.surfaceTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+	}
+	else
+	{
+		surfaceData.surfaceTransform = surfaceData.surfaceCapabilities.currentTransform;
+	}
+
+	std::vector<VkCompositeAlphaFlagBitsKHR> compositeAlphaFlags =
+	{
+		VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+		VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+		VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+		VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+	};
+
+	for (auto& compositeAlphaFlag : compositeAlphaFlags)
+	{
+		if (surfaceData.surfaceCapabilities.supportedCompositeAlpha & compositeAlphaFlag)
+		{
+			surfaceData.compositeAlpha = compositeAlphaFlag;
+			break;
+		};
+	}
+}
+
+void VulkanBackend::GetSurfaceExtent(VkPhysicalDevice device, SurfaceData& surfaceData)
+{
+	if (surfaceData.surfaceCapabilities.currentExtent.width != UINT32_MAX)
+	{
+		surfaceData.surfaceExtent = surfaceData.surfaceCapabilities.currentExtent;
+	}
+
+	VkExtent2D actualExtent = { surfaceData.width, surfaceData.height };
+
+	actualExtent.width = std::max<uint32_t>(surfaceData.surfaceCapabilities.minImageExtent.width,
+		std::min<uint32_t>(surfaceData.surfaceCapabilities.maxImageExtent.width, actualExtent.width));
+	actualExtent.height = std::max<uint32_t>(surfaceData.surfaceCapabilities.minImageExtent.height,
+		std::min<uint32_t>(surfaceData.surfaceCapabilities.maxImageExtent.height, actualExtent.height));
+}
+
+void VulkanBackend::GetPresentMode(VkPhysicalDevice device, SurfaceData& surfaceData, bool vSync)
+{
+	if (vSync)
+	{
+		surfaceData.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+	}
+
+	uint32_t presentModeCount;
+	VulkanCheck(vkGetPhysicalDeviceSurfacePresentModesKHR(device, surfaceData.surface, &presentModeCount, nullptr));
+
+	std::vector<VkPresentModeKHR> presentModes(presentModeCount);
+	VulkanCheck(vkGetPhysicalDeviceSurfacePresentModesKHR(device, surfaceData.surface, &presentModeCount, presentModes.data()));
+
+	VkPresentModeKHR bestMode = VK_PRESENT_MODE_FIFO_KHR;
+
+	for (auto&& presentMode : presentModes)
+	{
+		if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+		{
+			surfaceData.presentMode = presentMode;
+			return;
+		}
+		if (presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
+		{
+			bestMode = presentMode;
+		}
+	}
+
+	surfaceData.presentMode = bestMode;
+}
+
+void VulkanBackend::GetSwapchainImageCount(SurfaceData& surfaceData)
+{
+	surfaceData.swapchainImageCount = surfaceData.surfaceCapabilities.minImageCount + 1;
+
+	if (surfaceData.surfaceCapabilities.maxImageCount > 0 && 
+		surfaceData.swapchainImageCount > surfaceData.surfaceCapabilities.maxImageCount)
+	{
+		surfaceData.swapchainImageCount = surfaceData.surfaceCapabilities.maxImageCount;
+	}
 }
 
 VkPhysicalDeviceMemoryProperties VulkanBackend::GetDeviceMemoryProperties(VkPhysicalDevice device)
@@ -595,18 +685,22 @@ VkPhysicalDeviceMemoryProperties VulkanBackend::GetDeviceMemoryProperties(VkPhys
 	return memoryProperties;
 }
 
-void VulkanBackend::FilterPresentQueues(Initialized& initialized, VkSurfaceKHR surface)
+void VulkanBackend::FilterPresentQueues(const BackendData& backendData, SurfaceData& surfaceData)
 {
-	int presentQueues = (int)initialized.presentQueueCandidates.size();
-	for (int q = 0; q < initialized.presentQueueCandidates.size(); ++q)
+	int presentQueues = (int)backendData.presentQueueCandidates.size();
+	surfaceData.presentQueues.resize(presentQueues);
+	for (int q = 0; q < backendData.presentQueueCandidates.size(); ++q)
 	{
 		VkBool32 supports;
-		vkGetPhysicalDeviceSurfaceSupportKHR(initialized.physicalDevice, q, surface, &supports);
+		vkGetPhysicalDeviceSurfaceSupportKHR(backendData.physicalDevice, q, surfaceData.surface, &supports);
 
-		if (!supports)
+		if (supports)
 		{
-			initialized.presentQueueCandidates[q] = VK_NULL_HANDLE;
-			--presentQueues;
+			surfaceData.presentQueues[q] = backendData.presentQueueCandidates[q];
+		}
+		else
+		{
+			surfaceData.presentQueues[q] = VK_NULL_HANDLE;
 		}
 	}
 
@@ -616,46 +710,46 @@ void VulkanBackend::FilterPresentQueues(Initialized& initialized, VkSurfaceKHR s
 	}
 }
 
-VkQueue VulkanBackend::SelectPresentQueue(const Initialized& initialized)
+void VulkanBackend::SelectPresentQueue(const BackendData& backendData, SurfaceData& surfaceData)
 {
-	VkQueue generalQueue = initialized.presentQueueCandidates[initialized.generalFamilyIndex];
+	VkQueue generalQueue = backendData.presentQueueCandidates[backendData.generalFamilyIndex];
 
 	if (generalQueue)
 	{
-		return generalQueue;
+		surfaceData.defaultPresentQueue = generalQueue;
+		return;
 	}
 
-	for (int q = 0; q < initialized.presentQueueCandidates.size(); ++q)
+	for (int q = 0; q < backendData.presentQueueCandidates.size(); ++q)
 	{
-		if (initialized.presentQueueCandidates[q])
+		if (backendData.presentQueueCandidates[q])
 		{
-			return initialized.presentQueueCandidates[q];
+			surfaceData.defaultPresentQueue = backendData.presentQueueCandidates[q];
+			return;
 		}
 	}
-
-	return VK_NULL_HANDLE;
 }
 
-VkQueue VulkanBackend::SelectPresentComputeQueue(const Initialized& initialized)
+void VulkanBackend::SelectPresentComputeQueue(const BackendData& backendData, SurfaceData& surfaceData)
 {
-	return initialized.presentQueueCandidates[initialized.computeFamilyIndex];
+	surfaceData.computePresentQueue = backendData.presentQueueCandidates[backendData.computeFamilyIndex];
 }
 
-void DestroyInstance(VulkanBackend::Initialized& initialized)
+void DestroyInstance(VulkanBackend::BackendData& backendData)
 {
-	if (initialized.debugMessenger != VK_NULL_HANDLE)
+	if (backendData.debugMessenger != VK_NULL_HANDLE)
 	{
 		// Destroying the debug messenger if one has been created.
 		// Assuming that the destruction procedure can be retrieved since the creation must have been found (otherwise the debug messenger would be null).
 		auto VkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
-			vkGetInstanceProcAddr(initialized.instance, "vkDestroyDebugUtilsMessengerEXT"));
-		VkDestroyDebugUtilsMessengerEXT(initialized.instance, initialized.debugMessenger, nullptr);
-		initialized.debugMessenger = VK_NULL_HANDLE;
+			vkGetInstanceProcAddr(backendData.instance, "vkDestroyDebugUtilsMessengerEXT"));
+		VkDestroyDebugUtilsMessengerEXT(backendData.instance, backendData.debugMessenger, nullptr);
+		backendData.debugMessenger = VK_NULL_HANDLE;
 	}
 
 	// Destroying the instance.
-	vkDestroyInstance(initialized.instance, nullptr);
-	initialized.instance = VK_NULL_HANDLE;
+	vkDestroyInstance(backendData.instance, nullptr);
+	backendData.instance = VK_NULL_HANDLE;
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(
