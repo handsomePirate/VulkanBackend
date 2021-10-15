@@ -77,7 +77,7 @@ namespace VulkanBackend
 
 	void BindImageMemory(VkDevice device, VkImage image, VkDeviceMemory memory, VkDeviceSize offset = 0);
 
-	// ========================= Images =========================
+	// ========================= Images ========================
 	
 	VkImage CreateImage2D(VkDevice device, uint32_t width, uint32_t height, uint32_t layerCount, uint32_t mipCount, VkImageUsageFlags usage,
 		VkFormat format, VkImageTiling imageTiling = VK_IMAGE_TILING_OPTIMAL, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
@@ -90,4 +90,16 @@ namespace VulkanBackend
 		VkSamplerAddressMode uAddressMode, VkSamplerAddressMode vAddressMode, VkSamplerAddressMode wAddressMode,
 		VkSamplerMipmapMode mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR, float maxAnisotropy = 1.f);
 	void DestroyImageSampler(VkDevice device, VkSampler& sampler);
+
+	// ====================== Presentation =====================
+
+	VkSwapchainKHR CreateSwapchain(VkDevice device, uint32_t width, uint32_t height, VkSurfaceKHR surface);
+	VkSwapchainKHR RecreateSwapchain(VkDevice device, uint32_t width, uint32_t height, VkSurfaceKHR surface, VkSwapchainKHR& oldSwapchain);
+	void DestroySwapchain(VkDevice device, VkSwapchainKHR swapchain);
+
+	//pipeline
+	//framebuffer
+	//descriptors
+	//shaders
+	//buffers
 }

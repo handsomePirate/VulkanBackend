@@ -1,5 +1,5 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
-#include "ErrorCheck.hpp"
+#include "VulkanBackend/ErrorCheck.hpp"
 
 VkDeviceMemory VulkanBackend::AllocateMemory(VkDevice device, VkDeviceSize size, uint32_t memoryTypeIndex,
 	VkPhysicalDeviceMemoryProperties deviceMemoryProperties, VkMemoryPropertyFlags memoryProperties)
