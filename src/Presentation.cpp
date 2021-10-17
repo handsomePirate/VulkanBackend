@@ -1,14 +1,14 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "VulkanBackend/ErrorCheck.hpp"
 
-VkSwapchainKHR VulkanBackend::CreateSwapchain(const BackendData& backendData, uint32_t width, uint32_t height, const SurfaceData& surfaceData,
+VkSwapchainKHR VulkanBackend::CreateSwapchain(const BackendData& backendData, const SurfaceData& surfaceData,
 	VkImageUsageFlags imageUsage, VkSharingMode sharingMode)
 {
 	VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE;
-	return RecreateSwapchain(backendData, width, height, surfaceData, oldSwapchain, imageUsage, sharingMode);
+	return RecreateSwapchain(backendData, surfaceData, oldSwapchain, imageUsage, sharingMode);
 }
 
-VkSwapchainKHR VulkanBackend::RecreateSwapchain(const BackendData& backendData, uint32_t width, uint32_t height, const SurfaceData& surfaceData,
+VkSwapchainKHR VulkanBackend::RecreateSwapchain(const BackendData& backendData, const SurfaceData& surfaceData,
 	VkSwapchainKHR& oldSwapchain, VkImageUsageFlags imageUsage, VkSharingMode sharingMode)
 {
 	VkSwapchainCreateInfoKHR swapchainCreateInfo{};

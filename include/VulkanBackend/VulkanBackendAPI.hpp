@@ -127,9 +127,9 @@ namespace VulkanBackend
 
 	// ====================== Presentation =====================
 
-	VkSwapchainKHR CreateSwapchain(const BackendData& backendData, uint32_t width, uint32_t height, const SurfaceData& surfaceData,
+	VkSwapchainKHR CreateSwapchain(const BackendData& backendData, const SurfaceData& surfaceData,
 		VkImageUsageFlags imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE);
-	VkSwapchainKHR RecreateSwapchain(const BackendData& backendData, uint32_t width, uint32_t height, const SurfaceData& surfaceData,
+	VkSwapchainKHR RecreateSwapchain(const BackendData& backendData, const SurfaceData& surfaceData,
 		VkSwapchainKHR& oldSwapchain, VkImageUsageFlags imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 		VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE);
 	void DestroySwapchain(VkDevice device, VkSwapchainKHR& swapchain);
