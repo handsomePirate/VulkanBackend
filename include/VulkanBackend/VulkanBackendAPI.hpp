@@ -135,6 +135,8 @@ namespace VulkanBackend
 		VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE);
 	void DestroySwapchain(VkDevice device, VkSwapchainKHR& swapchain);
 
+	void GetSwapchainImages(VkDevice device, VkSwapchainKHR swapchain, std::vector<VkImage>& images);
+
 	VkFramebuffer CreateFramebuffer(VkDevice device, uint32_t width, uint32_t height, VkRenderPass renderPass,
 		const std::vector<VkImageView>& attachments);
 	void DestroyFramebuffer(VkDevice device, VkFramebuffer& framebuffer);

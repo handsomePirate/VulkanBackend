@@ -28,6 +28,8 @@ VkSwapchainKHR VulkanBackend::RecreateSwapchain(const BackendData& backendData, 
 	oldSwapchain = VK_NULL_HANDLE;
 	swapchainCreateInfo.minImageCount = surfaceData.swapchainImageCount;
 
+	// TODO: Support transfer source and destination if necessary and possible.
+
 	VkSwapchainKHR swapchain;
 	VulkanCheck(vkCreateSwapchainKHR(backendData.logicalDevice, &swapchainCreateInfo, nullptr, &swapchain));
 	return swapchain;
@@ -37,6 +39,16 @@ void VulkanBackend::DestroySwapchain(VkDevice device, VkSwapchainKHR& swapchain)
 {
 	vkDestroySwapchainKHR(device, swapchain, nullptr);
 	swapchain = VK_NULL_HANDLE;
+}
+
+void VulkanBackend::GetSwapchainImages(VkDevice device, VkSwapchainKHR swapchain, std::vector<VkImage>& images)
+{
+	uint32_t imageCount;
+	VulkanCheck(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
+
+	// Get the swap chain images
+	images.resize(imageCount);
+	VulkanCheck(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, images.data()));
 }
 
 VkFramebuffer VulkanBackend::CreateFramebuffer(VkDevice device, uint32_t width, uint32_t height, VkRenderPass renderPass, const std::vector<VkImageView>& attachments)
