@@ -46,6 +46,7 @@ namespace VulkanBackend
 	};
 
 	void CreateSurface(VkInstance instance, SurfaceData& surfaceData, void* windowHandle, void* connection);
+	void DestroySurface(VkInstance instance, VkSurfaceKHR& surface);
 
 	void GetDepthFormat(VkPhysicalDevice device, SurfaceData& surfaceData);
 	void GetSurfaceFormat(VkPhysicalDevice device, SurfaceData& surfaceData);

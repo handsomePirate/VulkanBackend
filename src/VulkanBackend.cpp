@@ -520,6 +520,11 @@ void VulkanBackend::Shutdown(BackendData& backendData)
 	DestroyInstance(backendData);
 }
 
+void VulkanBackend::DestroySurface(VkInstance instance, VkSurfaceKHR& surface)
+{
+	vkDestroySurfaceKHR(instance, surface, nullptr);
+}
+
 void VulkanBackend::GetDepthFormat(VkPhysicalDevice device, SurfaceData& surfaceData)
 {
 	// Since all depth formats may be optional, we need to find a suitable depth format to use.
