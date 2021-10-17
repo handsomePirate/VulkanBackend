@@ -76,9 +76,10 @@ VkRenderPass VulkanBackend::CreateRenderPass(VkDevice device, const SurfaceData&
 	return renderPass;
 }
 
-void VulkanBackend::DestroyRenderPass(VkDevice device, VkRenderPass renderPass)
+void VulkanBackend::DestroyRenderPass(VkDevice device, VkRenderPass& renderPass)
 {
 	vkDestroyRenderPass(device, renderPass, nullptr);
+	renderPass = VK_NULL_HANDLE;
 }
 
 VkPipelineCache VulkanBackend::CreatePipelineCache(VkDevice device)
@@ -91,9 +92,10 @@ VkPipelineCache VulkanBackend::CreatePipelineCache(VkDevice device)
 	return pipelineCache;
 }
 
-void VulkanBackend::DestroyPipelineCache(VkDevice device, VkPipelineCache pipelineCache)
+void VulkanBackend::DestroyPipelineCache(VkDevice device, VkPipelineCache& pipelineCache)
 {
 	vkDestroyPipelineCache(device, pipelineCache, nullptr);
+	pipelineCache = VK_NULL_HANDLE;
 }
 
 VkPipelineLayout VulkanBackend::CreatePipelineLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, VkPushConstantRange pushConstantRange)
@@ -110,9 +112,10 @@ VkPipelineLayout VulkanBackend::CreatePipelineLayout(VkDevice device, VkDescript
 	return pipelineLayout;
 }
 
-void VulkanBackend::DestroyPipelineLayout(VkDevice device, VkPipelineLayout pipelineLayout)
+void VulkanBackend::DestroyPipelineLayout(VkDevice device, VkPipelineLayout& pipelineLayout)
 {
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+	pipelineLayout = VK_NULL_HANDLE;
 }
 
 VkPipeline VulkanBackend::CreateGraphicsPipeline(VkDevice device, VkPrimitiveTopology primitiveTopology, VkPolygonMode polygonMode,
@@ -194,7 +197,21 @@ VkPipeline VulkanBackend::CreateGraphicsPipeline(VkDevice device, VkPrimitiveTop
 	return pipeline;
 }
 
-void VulkanBackend::DestroyPipeline(VkDevice device, VkPipeline pipeline)
+VkPipeline VulkanBackend::CreateComputePipeline(VkDevice device, VkPipelineLayout pipelineLayout, VkPipelineShaderStageCreateInfo& shaderStage,
+	VkPipelineCache pipelineCache)
+{
+	VkComputePipelineCreateInfo computePipelineCreateInfo{};
+	computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	computePipelineCreateInfo.layout = pipelineLayout;
+	computePipelineCreateInfo.stage = shaderStage;
+
+	VkPipeline pipeline;
+	VulkanCheck(vkCreateComputePipelines(device, pipelineCache, 1, &computePipelineCreateInfo, nullptr, &pipeline));
+	return pipeline;
+}
+
+void VulkanBackend::DestroyPipeline(VkDevice device, VkPipeline& pipeline)
 {
 	vkDestroyPipeline(device, pipeline, nullptr);
+	pipeline = VK_NULL_HANDLE;
 }

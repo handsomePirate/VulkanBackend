@@ -101,7 +101,7 @@ namespace VulkanBackend
 
 	void BindImageMemory(VkDevice device, VkImage image, VkDeviceMemory memory, VkDeviceSize offset = 0);
 
-	// ========================= Images ========================
+	// ======================= Resources =======================
 	
 	VkImage CreateImage2D(VkDevice device, uint32_t width, uint32_t height, uint32_t layerCount, uint32_t mipCount, VkImageUsageFlags usage,
 		VkFormat format, VkImageTiling imageTiling = VK_IMAGE_TILING_OPTIMAL, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
@@ -115,6 +115,16 @@ namespace VulkanBackend
 		VkSamplerMipmapMode mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR, float maxAnisotropy = 1.f);
 	void DestroyImageSampler(VkDevice device, VkSampler& sampler);
 
+	VkBuffer CreateBuffer(VkDevice device, VkBufferUsageFlags usage, VkDeviceSize size);
+	void DestroyBuffer(VkDevice device, VkBuffer& buffer);
+
+	void CopyBufferToBuffer(VkDevice device, VkBuffer source, VkBuffer destination, VkDeviceSize size, VkCommandBuffer commandBuffer,
+		VkQueue queue, VkDeviceSize sourceOffset = 0, VkDeviceSize destinationOffset = 0);
+	void CopyBufferToImage(VkDevice device, VkBuffer source, VkImage destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
+		VkQueue queue, uint32_t width, uint32_t height, VkImageAspectFlags aspect);
+	void CopyImageToBuffer(VkDevice device, VkImage source, VkBuffer destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
+		VkQueue queue, uint32_t width, uint32_t height, VkImageAspectFlags aspect, int32_t xOffset = 0, int32_t yOffset = 0);
+
 	// ====================== Presentation =====================
 
 	VkSwapchainKHR CreateSwapchain(const BackendData& backendData, uint32_t width, uint32_t height, const SurfaceData& surfaceData,
@@ -122,29 +132,47 @@ namespace VulkanBackend
 	VkSwapchainKHR RecreateSwapchain(const BackendData& backendData, uint32_t width, uint32_t height, const SurfaceData& surfaceData,
 		VkSwapchainKHR& oldSwapchain, VkImageUsageFlags imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 		VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE);
-	void DestroySwapchain(VkDevice device, VkSwapchainKHR swapchain);
+	void DestroySwapchain(VkDevice device, VkSwapchainKHR& swapchain);
+
+	VkFramebuffer CreateFramebuffer(VkDevice device, uint32_t width, uint32_t height, VkRenderPass renderPass,
+		const std::vector<VkImageView>& attachments);
+	void DestroyFramebuffer(VkDevice device, VkFramebuffer& framebuffer);
 
 	// ======================== Pipeline =======================
 
 	VkRenderPass CreateRenderPass(VkDevice device, const SurfaceData& surfaceData);
-	void DestroyRenderPass(VkDevice device, VkRenderPass renderPass);
+	void DestroyRenderPass(VkDevice device, VkRenderPass& renderPass);
 
 	VkPipelineCache CreatePipelineCache(VkDevice device);
-	void DestroyPipelineCache(VkDevice device, VkPipelineCache pipelineCache);
+	void DestroyPipelineCache(VkDevice device, VkPipelineCache& pipelineCache);
 
 	VkPipelineLayout CreatePipelineLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, VkPushConstantRange pushConstantRange);
-	void DestroyPipelineLayout(VkDevice device, VkPipelineLayout pipelineLayout);
+	void DestroyPipelineLayout(VkDevice device, VkPipelineLayout& pipelineLayout);
 
 	VkPipeline CreateGraphicsPipeline(VkDevice device, VkPrimitiveTopology primitiveTopology, VkPolygonMode polygonMode,
 		VkCullModeFlags cullMode, VkFrontFace frontFace, VkColorComponentFlags colorComponents, VkBool32 depthTestEnable,
 		VkBool32 depthWriteEnable, VkCompareOp compareOp, VkSampleCountFlagBits sampleCount, const std::vector<VkDynamicState>& dynamicStates,
 		VkPipelineVertexInputStateCreateInfo& vertexInputState, VkRenderPass renderPass, VkPipelineLayout pipelineLayout,
 		const std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkPipelineCache pipelineCache = VK_NULL_HANDLE);
-	//VkPipeline CreateComputePipeline();
-	void DestroyPipeline(VkDevice device, VkPipeline pipeline);
+	VkPipeline CreateComputePipeline(VkDevice device, VkPipelineLayout pipelineLayout, VkPipelineShaderStageCreateInfo& shaderStage, VkPipelineCache pipelineCache);
+	void DestroyPipeline(VkDevice device, VkPipeline& pipeline);
 
-	//framebuffer
-	//descriptors
-	//shaders
-	//buffers
+	// ========================= Shader ========================
+
+	VkDescriptorPool CreateDescriptorPool(VkDevice device, const std::vector<VkDescriptorPoolSize> poolSizes, uint32_t maxSets);
+	void DestroyDescriptorPool(VkDevice device, VkDescriptorPool& descriptorPool);
+	
+	VkDescriptorSetLayout CreateDescriptorSetLayout(VkDevice device, const std::vector<VkDescriptorSetLayoutBinding>& layoutBindings);
+	void DestroyDescriptorSetLayout(VkDevice device, VkDescriptorSetLayout& descriptorSetLayout);
+	
+	VkDescriptorSet AllocateDescriptorSet(VkDevice device, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout);
+	void FreeDescriptorSet(VkDevice device, VkDescriptorPool descriptorPool, VkDescriptorSet& descriptorSet);
+	
+	VkShaderModule CreateShaderModule(VkDevice device, const std::vector<uint32_t>& bytes);
+	void DestroyShaderModule(VkDevice device, VkShaderModule& shaderModule);
+
+	void WriteDescriptorSets(VkDevice device, VkDescriptorSet descriptorSet,
+		const std::vector<VkDescriptorImageInfo>& imageDescriptors,
+		const std::vector<VkDescriptorImageInfo>& storageBufferDescriptors,
+		const std::vector<VkDescriptorImageInfo>& uniformBufferDescriptors);
 }

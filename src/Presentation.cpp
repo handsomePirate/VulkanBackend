@@ -33,7 +33,30 @@ VkSwapchainKHR VulkanBackend::RecreateSwapchain(const BackendData& backendData, 
 	return swapchain;
 }
 
-void VulkanBackend::DestroySwapchain(VkDevice device, VkSwapchainKHR swapchain)
+void VulkanBackend::DestroySwapchain(VkDevice device, VkSwapchainKHR& swapchain)
 {
 	vkDestroySwapchainKHR(device, swapchain, nullptr);
+	swapchain = VK_NULL_HANDLE;
+}
+
+VkFramebuffer VulkanBackend::CreateFramebuffer(VkDevice device, uint32_t width, uint32_t height, VkRenderPass renderPass, const std::vector<VkImageView>& attachments)
+{
+	VkFramebufferCreateInfo framebufferCreateInfo{};
+	framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	framebufferCreateInfo.renderPass = renderPass;
+	framebufferCreateInfo.attachmentCount = (uint32_t)attachments.size();
+	framebufferCreateInfo.pAttachments = attachments.data();
+	framebufferCreateInfo.width = width;
+	framebufferCreateInfo.height = height;
+	framebufferCreateInfo.layers = 1;
+
+	VkFramebuffer framebuffer;
+	VulkanCheck(vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffer));
+	return framebuffer;
+}
+
+void VulkanBackend::DestroyFramebuffer(VkDevice device, VkFramebuffer& framebuffer)
+{
+	vkDestroyFramebuffer(device, framebuffer, nullptr);
+	framebuffer = VK_NULL_HANDLE;
 }
