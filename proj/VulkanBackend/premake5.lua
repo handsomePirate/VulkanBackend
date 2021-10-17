@@ -30,12 +30,12 @@ project "VulkanBackend"
 	filter{}
 	
 	filter "configurations:Debug"
-		defines { "VB_DEBUG" }
+		defines { "DEBUG" }
 		runtime "Debug"
 		symbols "On"
 
 	filter "configurations:Release"
-		defines { "VB_RELEASE" }
+		defines { "RELEASE" }
 		runtime "Release"
 		optimize "On"
 
