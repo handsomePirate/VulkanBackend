@@ -178,6 +178,7 @@ VkPipeline VulkanBackend::CreateGraphicsPipeline(VkDevice device, VkPrimitiveTop
 	dynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
 
 	VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
+	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineCreateInfo.renderPass = renderPass;
 	pipelineCreateInfo.layout = pipelineLayout;
 	pipelineCreateInfo.pVertexInputState = &vertexInputState;
