@@ -154,11 +154,9 @@ VkPipeline VulkanBackend::CreateGraphicsPipeline(VkDevice device, VkPrimitiveTop
 
 	VkPipelineMultisampleStateCreateInfo multisampleCreateInfo{};
 	multisampleCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	VkPipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo{};
-	pipelineMultisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	pipelineMultisampleStateCreateInfo.rasterizationSamples = sampleCount;
-	pipelineMultisampleStateCreateInfo.flags = 0;
-	pipelineMultisampleStateCreateInfo.minSampleShading = 0.3f;
+	multisampleCreateInfo.rasterizationSamples = sampleCount;
+	multisampleCreateInfo.flags = 0;
+	multisampleCreateInfo.minSampleShading = 0.3f;
 
 	VkPipelineViewportStateCreateInfo viewportStateCreateInfo{};
 	viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
