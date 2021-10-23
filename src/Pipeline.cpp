@@ -3,7 +3,7 @@
 
 VkRenderPass VulkanBackend::CreateRenderPass(VkDevice device, const SurfaceData& surfaceData)
 {
-	const int attachmentCount = 2;
+	const int attachmentCount = 1;
 	VkAttachmentDescription attachments[attachmentCount];
 	// Color attachment
 	attachments[0] = {};
@@ -16,15 +16,15 @@ VkRenderPass VulkanBackend::CreateRenderPass(VkDevice device, const SurfaceData&
 	attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	// Depth attachment
-	attachments[1] = {};
-	attachments[1].format = surfaceData.depthFormat;
-	attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-	attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	//attachments[1] = {};
+	//attachments[1].format = surfaceData.depthFormat;
+	//attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+	//attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	//attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	//attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	//attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	//attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	//attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentReference colorReference{};
 	colorReference.attachment = 0;
@@ -38,7 +38,7 @@ VkRenderPass VulkanBackend::CreateRenderPass(VkDevice device, const SurfaceData&
 	subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpassDescription.colorAttachmentCount = 1;
 	subpassDescription.pColorAttachments = &colorReference;
-	subpassDescription.pDepthStencilAttachment = &depthReference;
+	//subpassDescription.pDepthStencilAttachment = &depthReference;
 
 	// Subpass dependencies for layout transitions
 	const int dependencyCount = 2;
