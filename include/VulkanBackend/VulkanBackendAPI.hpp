@@ -113,7 +113,7 @@ namespace VulkanBackend
 
 	VkSampler CreateImageSampler(VkDevice device, VkFilter magnificationFilter, VkFilter minificationFilter, VkBorderColor borderColor,
 		VkSamplerAddressMode uAddressMode, VkSamplerAddressMode vAddressMode, VkSamplerAddressMode wAddressMode,
-		VkSamplerMipmapMode mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR, float maxAnisotropy = 1.f);
+		float minLod, float maxLod, float mipLodBias = 0.f, VkSamplerMipmapMode mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR, float maxAnisotropy = 1.f);
 	void DestroyImageSampler(VkDevice device, VkSampler& sampler);
 
 	VkBuffer CreateBuffer(VkDevice device, VkBufferUsageFlags usage, VkDeviceSize size);

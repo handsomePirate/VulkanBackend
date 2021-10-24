@@ -49,7 +49,8 @@ void VulkanBackend::DestroyImageView(VkDevice device, VkImageView& imageView)
 }
 
 VkSampler VulkanBackend::CreateImageSampler(VkDevice device, VkFilter magnificationFilter, VkFilter minificationFilter, VkBorderColor borderColor,
-	VkSamplerAddressMode uAddressMode, VkSamplerAddressMode vAddressMode, VkSamplerAddressMode wAddressMode, VkSamplerMipmapMode mipmapMode, float maxAnisotropy)
+	VkSamplerAddressMode uAddressMode, VkSamplerAddressMode vAddressMode, VkSamplerAddressMode wAddressMode,
+	float minLod, float maxLod, float mipLodBias, VkSamplerMipmapMode mipmapMode, float maxAnisotropy)
 {
 	VkSamplerCreateInfo samplerCreateInfo{};
 	samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -61,6 +62,9 @@ VkSampler VulkanBackend::CreateImageSampler(VkDevice device, VkFilter magnificat
 	samplerCreateInfo.addressModeV = vAddressMode;
 	samplerCreateInfo.addressModeW = wAddressMode;
 	samplerCreateInfo.borderColor = borderColor;
+	samplerCreateInfo.minLod = minLod;
+	samplerCreateInfo.maxLod = maxLod;
+	samplerCreateInfo.mipLodBias = mipLodBias;
 
 	VkSampler sampler;
 	VulkanCheck(vkCreateSampler(device, &samplerCreateInfo, nullptr, &sampler));
