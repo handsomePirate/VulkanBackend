@@ -511,6 +511,8 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 
 void VulkanBackend::Shutdown(BackendData& backendData)
 {
+	vmaDestroyAllocator(backendData.allocator);
+
 	backendData.generalFamilyIndex = 0;
 	backendData.computeFamilyIndex = 0;
 	backendData.transferFamilyIndex = 0;
