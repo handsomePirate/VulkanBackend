@@ -497,6 +497,14 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 		}
 	}
 	
+	VmaAllocatorCreateInfo allocatorInfo = {};
+	allocatorInfo.vulkanApiVersion = vulkanApplicationInfo.apiVersion;
+	allocatorInfo.physicalDevice = backendData.physicalDevice;
+	allocatorInfo.device = backendData.logicalDevice;
+	allocatorInfo.instance = backendData.instance;
+	
+	vmaCreateAllocator(&allocatorInfo, &backendData.allocator);
+
 	// Returning the initialized Vulkan structures.
 	return backendData;
 }

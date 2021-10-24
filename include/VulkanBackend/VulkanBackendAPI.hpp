@@ -2,6 +2,7 @@
 #include "Logger.hpp"
 #include <SoftwareCore/Logger.hpp>
 #include <vulkan/vulkan_core.h>
+#include <VulkanMemoryHandler/VulkanMemoryHandlerAPI.hpp>
 
 namespace VulkanBackend
 {
@@ -20,6 +21,7 @@ namespace VulkanBackend
 		std::vector<VkQueue> transferQueues;
 		int transferFamilyIndex;
 		std::vector<VkQueue> presentQueueCandidates;
+		VmaAllocator allocator;
 	};
 
 	BackendData Initialize(const char* configFilePath);

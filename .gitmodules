@@ -7,3 +7,6 @@
 [submodule "ext/yaml"]
 	path = ext/yaml
 	url = git@github.com:handsomePirate/yaml-cpp.git
+[submodule "ext/VulkanMemoryHandler"]
+	path = ext/VulkanMemoryHandler
+	url = git@github.com:handsomePirate/VulkanMemoryHandler.git

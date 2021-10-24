@@ -1,4 +1,8 @@
 group "ext"
+	include "ext/VulkanMemoryHandler/dependencies.lua"
+group ""
+group "ext"
 	include "ext/SoftwareCore/proj/SoftwareCore"
 	include "ext/yaml"
+	include "ext/VulkanMemoryHandler/proj/VulkanMemoryHandler"
 group ""

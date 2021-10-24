@@ -12,7 +12,9 @@ project "Test"
 		"$(VULKAN_SDK)/include",
 		SoftwareCoreInclude,
 		YamlInclude,
-		VulkanBackendInclude
+		VulkanBackendInclude,
+		VulkanMemoryHandlerInclude,
+		VulkanMemoryAllocatorInclude,
 	}
 	
 	links {
