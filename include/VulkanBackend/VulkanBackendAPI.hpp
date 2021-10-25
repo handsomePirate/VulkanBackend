@@ -118,6 +118,9 @@ namespace VulkanBackend
 		VkFormat format, VmaMemoryUsage residency, VkImageTiling imageTiling = VK_IMAGE_TILING_OPTIMAL, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
 	void DestroyImage(const BackendData& backendData, Image& image);
 
+	void TransitionImageLayout(VkCommandBuffer commandBuffer, VkImageLayout currentLayout, VkImageLayout nextLayout, VkImage image, uint32_t mipLevels,
+		uint32_t sourceQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t destinationQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED);
+
 	VkImageView CreateImageView2D(const BackendData& backendData, VkImage image, VkFormat format, VkImageSubresourceRange subresource);
 	void DestroyImageView(const BackendData& backendData, VkImageView& imageView);
 

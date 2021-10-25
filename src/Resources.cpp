@@ -31,6 +31,78 @@ void VulkanBackend::DestroyImage(const BackendData& backendData, VulkanBackend::
 	image.allocation = VK_NULL_HANDLE;
 }
 
+void VulkanBackend::TransitionImageLayout(VkCommandBuffer commandBuffer,
+	VkImageLayout currentLayout, VkImageLayout nextLayout, VkImage image, uint32_t mipLevels,
+	uint32_t sourceQueueFamilyIndex, uint32_t destinationQueueFamilyIndex)
+{
+	VkImageMemoryBarrier barrier{};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	// Undefined here means we do not care about the original contents of the image.
+	barrier.oldLayout = currentLayout;
+	barrier.newLayout = nextLayout;
+
+	// NOTE: This can be used to transfer queue ownership.
+	barrier.srcQueueFamilyIndex = sourceQueueFamilyIndex;
+	barrier.dstQueueFamilyIndex = destinationQueueFamilyIndex;
+
+	barrier.image = image;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.levelCount = mipLevels;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+
+	VkPipelineStageFlags srcStage;
+	VkPipelineStageFlags dstStage;
+
+	// To transition the image, a pipeline barrier is needed.
+	if (currentLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+		nextLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+	{
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	}
+	else if (
+		currentLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+		nextLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	}
+	else if (
+		currentLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL &&
+		nextLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	}
+	else if (
+		currentLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+		nextLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+	{
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+		srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		dstStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	}
+	else
+	{
+		CoreLogError(VulkanLogger, "Vulkan backend: Unsupported layout transition.");
+	}
+
+	vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+}
+
 VkImageView VulkanBackend::CreateImageView2D(const BackendData& backendData, VkImage image, VkFormat format, VkImageSubresourceRange subresource)
 {
 	VkImageViewCreateInfo imageViewCreateInfo = {};
