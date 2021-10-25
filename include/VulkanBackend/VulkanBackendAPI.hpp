@@ -90,22 +90,6 @@ namespace VulkanBackend
 	VkFence CreateFence(const BackendData& backendData, VkFenceCreateFlags flags = 0);
 	void DestroyFence(const BackendData& backendData, VkFence& fence);
 
-	// ========================= Memory ========================
-
-	VkDeviceMemory AllocateMemory(const BackendData& backendData, VkDeviceSize size, uint32_t memoryTypeIndex,
-		VkPhysicalDeviceMemoryProperties deviceMemoryProperties, VkMemoryPropertyFlags memoryProperties);
-	void FreeMemory(const BackendData& backendData, VkDeviceMemory& memory);
-
-	VkMemoryRequirements GetImageMemoryRequirements(const BackendData& backendData, VkImage image);
-	VkMemoryRequirements GetBufferMemoryRequirements(const BackendData& backendData, VkBuffer buffer);
-
-	void* MapMemory(const BackendData& backendData, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags = 0);
-	void UnmapMemory(const BackendData& backendData, VkDeviceMemory memory);
-	void FlushMemory(const BackendData& backendData, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size);
-	void InvalidateMemory(const BackendData& backendData, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size);
-
-	void BindImageMemory(const BackendData& backendData, VkImage image, VkDeviceMemory memory, VkDeviceSize offset = 0);
-
 	// ======================= Resources =======================
 	
 	struct Image
