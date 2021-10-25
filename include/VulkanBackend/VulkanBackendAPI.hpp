@@ -24,6 +24,7 @@ namespace VulkanBackend
 		VmaAllocator allocator;
 		VkCommandPool transferCommandPool;
 		VkCommandBuffer transferCommandBuffer;
+		VkFence transferFence;
 	};
 
 	BackendData Initialize(const char* configFilePath);

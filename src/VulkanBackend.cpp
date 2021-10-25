@@ -507,6 +507,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 
 	backendData.transferCommandPool = CreateCommandPool(backendData, backendData.transferFamilyIndex);
 	backendData.transferCommandBuffer = AllocateCommandBuffer(backendData, backendData.transferCommandPool);
+	backendData.transferFence = CreateFence(backendData, VK_FENCE_CREATE_SIGNALED_BIT);
 
 	// Returning the initialized Vulkan structures.
 	return backendData;
@@ -514,6 +515,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 
 void VulkanBackend::Shutdown(BackendData& backendData)
 {
+	DestroyFence(backendData, backendData.transferFence);
 	FreeCommandBuffer(backendData, backendData.transferCommandPool, backendData.transferCommandBuffer);
 	DestroyCommandPool(backendData, backendData.transferCommandPool);
 
