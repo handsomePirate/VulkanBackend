@@ -505,12 +505,18 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 	
 	VulkanCheck(vmaCreateAllocator(&allocatorInfo, &backendData.allocator));
 
+	backendData.transferCommandPool = CreateCommandPool(backendData, backendData.transferFamilyIndex);
+	backendData.transferCommandBuffer = AllocateCommandBuffer(backendData, backendData.transferCommandPool);
+
 	// Returning the initialized Vulkan structures.
 	return backendData;
 }
 
 void VulkanBackend::Shutdown(BackendData& backendData)
 {
+	FreeCommandBuffer(backendData, backendData.transferCommandPool, backendData.transferCommandBuffer);
+	DestroyCommandPool(backendData, backendData.transferCommandPool);
+
 	vmaDestroyAllocator(backendData.allocator);
 
 	backendData.generalFamilyIndex = 0;

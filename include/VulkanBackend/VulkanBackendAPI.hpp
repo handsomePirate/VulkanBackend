@@ -22,6 +22,8 @@ namespace VulkanBackend
 		int transferFamilyIndex;
 		std::vector<VkQueue> presentQueueCandidates;
 		VmaAllocator allocator;
+		VkCommandPool transferCommandPool;
+		VkCommandBuffer transferCommandBuffer;
 	};
 
 	BackendData Initialize(const char* configFilePath);

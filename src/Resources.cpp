@@ -52,7 +52,8 @@ void VulkanBackend::DestroyImageView(const BackendData& backendData, VkImageView
 	imageView = VK_NULL_HANDLE;
 }
 
-VkSampler VulkanBackend::CreateImageSampler(const BackendData& backendData, VkFilter magnificationFilter, VkFilter minificationFilter, VkBorderColor borderColor,
+VkSampler VulkanBackend::CreateImageSampler(const BackendData& backendData, VkFilter magnificationFilter,
+	VkFilter minificationFilter, VkBorderColor borderColor,
 	VkSamplerAddressMode uAddressMode, VkSamplerAddressMode vAddressMode, VkSamplerAddressMode wAddressMode,
 	float minLod, float maxLod, float mipLodBias, VkSamplerMipmapMode mipmapMode, float maxAnisotropy)
 {
