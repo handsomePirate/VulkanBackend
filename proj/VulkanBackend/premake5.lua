@@ -16,7 +16,6 @@ project "VulkanBackend"
 		SoftwareCoreInclude,
 		"../../ext/MagicEnum",
 		VulkanBackendInclude,
-		VulkanMemoryHandlerInclude,
 		VulkanMemoryAllocatorInclude
 	}
 	
@@ -25,7 +24,7 @@ project "VulkanBackend"
 		"$(VULKAN_SDK)/lib/shaderc_shared.lib",
 		"SoftwareCore",
 		"yaml-cpp",
-		"VulkanMemoryHandler"
+		"VulkanMemoryAllocator"
 	}
 
 	filter "system:windows"

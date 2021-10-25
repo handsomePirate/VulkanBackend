@@ -13,7 +13,6 @@ project "Test"
 		SoftwareCoreInclude,
 		YamlInclude,
 		VulkanBackendInclude,
-		VulkanMemoryHandlerInclude,
 		VulkanMemoryAllocatorInclude,
 	}
 	

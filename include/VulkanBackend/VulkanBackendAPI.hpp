@@ -2,7 +2,7 @@
 #include "Logger.hpp"
 #include <SoftwareCore/Logger.hpp>
 #include <vulkan/vulkan_core.h>
-#include <VulkanMemoryHandler/VulkanMemoryHandlerAPI.hpp>
+#include <vk_mem_alloc.h>
 
 namespace VulkanBackend
 {
