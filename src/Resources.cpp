@@ -103,6 +103,92 @@ void VulkanBackend::TransitionImageLayout(VkCommandBuffer commandBuffer,
 	vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
+void VulkanBackend::GenerateMips(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, VkFormat imageFormat,
+	int width, int height, int mipLevels)
+{
+	// Check if image format supports linear blitting.
+	VkFormatProperties formatProperties;
+	vkGetPhysicalDeviceFormatProperties(backendData.physicalDevice, imageFormat, &formatProperties);
+
+	if ((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0)
+	{
+		CoreLogError(VulkanLogger, "Vulkan backend: Texture format is not supported for linear blitting.");
+	}
+		
+
+	// The barriers are used for transitions between image layouts.
+	VkImageMemoryBarrier barrier = {};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.image = image;
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+	barrier.subresourceRange.levelCount = 1;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+	int32_t mipWidth = width;
+	int32_t mipHeight = height;
+
+	// We iteratively blit/downsize the image subresources here to form the mip maps.
+	for (uint32_t mip = 1; mip < mipLevels; ++mip)
+	{
+		// Thanks to this barrier specification we are accessing the different mip subresources of
+		// the image separately and also waiting for the previous operation on this image to finish
+		// (whether it is the previous level generation or the buffer copy to GPU).
+		barrier.subresourceRange.baseMipLevel = mip - 1;
+
+		vkCmdPipelineBarrier(commandBuffer,
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+			0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+		// We prepare the downsizing blit.
+		VkImageBlit blit = {};
+		blit.srcOffsets[0] = { 0, 0, 0 };
+		blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.srcSubresource.mipLevel = mip - 1;
+		blit.srcSubresource.baseArrayLayer = 0;
+		blit.srcSubresource.layerCount = 1;
+		blit.dstOffsets[0] = { 0, 0, 0 };
+		blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.dstSubresource.mipLevel = mip;
+		blit.dstSubresource.baseArrayLayer = 0;
+		blit.dstSubresource.layerCount = 1;
+
+		// Downsize. The previous mip level is in the transfer source layout as it has been transitioned
+		// by the previous pipeline barrier call, however the current mip level that we are down-sizing to
+		// is still in the transfer destination layout from the complete transition before the generate mip
+		// maps call.
+		vkCmdBlitImage(commandBuffer,
+			image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1, &blit,
+			VK_FILTER_LINEAR);
+		// If the linear filter turns out to not be as precise as we want it to be, we might want to switch
+		// to cubic.
+
+		// Prepare for the next iteration.
+		if (mipWidth > 1)
+			mipWidth /= 2;
+		if (mipHeight > 1)
+			mipHeight /= 2;
+	}
+
+	// The last mip subresource also needs to be transitioned, so that the whole image resource then can be
+	// transitioned as a whole to shader read optimal layout.
+	barrier.subresourceRange.baseMipLevel = mipLevels - 1;
+
+	vkCmdPipelineBarrier(commandBuffer,
+		VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+		0, 0, nullptr, 0, nullptr, 1, &barrier);
+}
+
 VkImageView VulkanBackend::CreateImageView2D(const BackendData& backendData, VkImage image, VkFormat format, VkImageSubresourceRange subresource)
 {
 	VkImageViewCreateInfo imageViewCreateInfo = {};

@@ -104,6 +104,7 @@ namespace VulkanBackend
 
 	void TransitionImageLayout(VkCommandBuffer commandBuffer, VkImageLayout currentLayout, VkImageLayout nextLayout, VkImage image, uint32_t mipLevels,
 		uint32_t sourceQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t destinationQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED);
+	void GenerateMips(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, VkFormat imageFormat, int width, int height, int mipLevels);
 
 	VkImageView CreateImageView2D(const BackendData& backendData, VkImage image, VkFormat format, VkImageSubresourceRange subresource);
 	void DestroyImageView(const BackendData& backendData, VkImageView& imageView);
