@@ -1,7 +1,7 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "VulkanBackend/ErrorCheck.hpp"
 
-VkDeviceMemory VulkanBackend::AllocateMemory(VkDevice device, VkDeviceSize size, uint32_t memoryTypeIndex,
+VkDeviceMemory VulkanBackend::AllocateMemory(const BackendData& backendData, VkDeviceSize size, uint32_t memoryTypeIndex,
 	VkPhysicalDeviceMemoryProperties deviceMemoryProperties, VkMemoryPropertyFlags memoryProperties)
 {
 	VkMemoryAllocateInfo memoryAllocateInfo{};
@@ -10,44 +10,44 @@ VkDeviceMemory VulkanBackend::AllocateMemory(VkDevice device, VkDeviceSize size,
 	memoryAllocateInfo.memoryTypeIndex = memoryTypeIndex;
 
 	VkDeviceMemory memory;
-	VulkanCheck(vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &memory));
+	VulkanCheck(vkAllocateMemory(backendData.logicalDevice, &memoryAllocateInfo, nullptr, &memory));
 
 	return memory;
 }
 
-void VulkanBackend::FreeMemory(VkDevice device, VkDeviceMemory& memory)
+void VulkanBackend::FreeMemory(const BackendData& backendData, VkDeviceMemory& memory)
 {
-	vkFreeMemory(device, memory, nullptr);
+	vkFreeMemory(backendData.logicalDevice, memory, nullptr);
 	memory = VK_NULL_HANDLE;
 }
 
-VkMemoryRequirements VulkanBackend::GetImageMemoryRequirements(VkDevice device, VkImage image)
+VkMemoryRequirements VulkanBackend::GetImageMemoryRequirements(const BackendData& backendData, VkImage image)
 {
 	VkMemoryRequirements memoryRequirements;
-	vkGetImageMemoryRequirements(device, image, &memoryRequirements);
+	vkGetImageMemoryRequirements(backendData.logicalDevice, image, &memoryRequirements);
 	return memoryRequirements;
 }
 
-VkMemoryRequirements VulkanBackend::GetBufferMemoryRequirements(VkDevice device, VkBuffer buffer)
+VkMemoryRequirements VulkanBackend::GetBufferMemoryRequirements(const BackendData& backendData, VkBuffer buffer)
 {
 	VkMemoryRequirements memoryRequirements;
-	vkGetBufferMemoryRequirements(device, buffer, &memoryRequirements);
+	vkGetBufferMemoryRequirements(backendData.logicalDevice, buffer, &memoryRequirements);
 	return memoryRequirements;
 }
 
-void* VulkanBackend::MapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags)
+void* VulkanBackend::MapMemory(const BackendData& backendData, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags)
 {
 	void* output;
-	VulkanCheck(vkMapMemory(device, memory, offset, size, flags, &output));
+	VulkanCheck(vkMapMemory(backendData.logicalDevice, memory, offset, size, flags, &output));
 	return output;
 }
 
-void VulkanBackend::UnmapMemory(VkDevice device, VkDeviceMemory memory)
+void VulkanBackend::UnmapMemory(const BackendData& backendData, VkDeviceMemory memory)
 {
-	vkUnmapMemory(device, memory);
+	vkUnmapMemory(backendData.logicalDevice, memory);
 }
 
-void VulkanBackend::FlushMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size)
+void VulkanBackend::FlushMemory(const BackendData& backendData, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size)
 {
 	VkMappedMemoryRange mappedMemoryRange{};
 	mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -55,10 +55,10 @@ void VulkanBackend::FlushMemory(VkDevice device, VkDeviceMemory memory, VkDevice
 	mappedMemoryRange.offset = offset;
 	mappedMemoryRange.size = size;
 	
-	VulkanCheck(vkFlushMappedMemoryRanges(device, 1, &mappedMemoryRange));
+	VulkanCheck(vkFlushMappedMemoryRanges(backendData.logicalDevice, 1, &mappedMemoryRange));
 }
 
-void VulkanBackend::InvalidateMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size)
+void VulkanBackend::InvalidateMemory(const BackendData& backendData, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size)
 {
 	VkMappedMemoryRange mappedMemoryRange{};
 	mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -66,10 +66,10 @@ void VulkanBackend::InvalidateMemory(VkDevice device, VkDeviceMemory memory, VkD
 	mappedMemoryRange.offset = offset;
 	mappedMemoryRange.size = size;
 	
-	VulkanCheck(vkInvalidateMappedMemoryRanges(device, 1, &mappedMemoryRange));
+	VulkanCheck(vkInvalidateMappedMemoryRanges(backendData.logicalDevice, 1, &mappedMemoryRange));
 }
 
-void VulkanBackend::BindImageMemory(VkDevice device, VkImage image, VkDeviceMemory memory, VkDeviceSize offset)
+void VulkanBackend::BindImageMemory(const BackendData& backendData, VkImage image, VkDeviceMemory memory, VkDeviceSize offset)
 {
-	VulkanCheck(vkBindImageMemory(device, image, memory, offset));
+	VulkanCheck(vkBindImageMemory(backendData.logicalDevice, image, memory, offset));
 }

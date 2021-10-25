@@ -1,37 +1,37 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "VulkanBackend/ErrorCheck.hpp"
 
-VkSemaphore VulkanBackend::CreateSemaphore(VkDevice device)
+VkSemaphore VulkanBackend::CreateSemaphore(const BackendData& backendData)
 {
 	VkSemaphoreCreateInfo semaphoreCreateInfo{};
 	semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	
 	VkSemaphore semaphore;
-	VulkanCheck(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &semaphore));
+	VulkanCheck(vkCreateSemaphore(backendData.logicalDevice, &semaphoreCreateInfo, nullptr, &semaphore));
 	
 	return semaphore;
 }
 
-void VulkanBackend::DestroySemaphore(VkDevice device, VkSemaphore& semaphore)
+void VulkanBackend::DestroySemaphore(const BackendData& backendData, VkSemaphore& semaphore)
 {
-	vkDestroySemaphore(device, semaphore, nullptr);
+	vkDestroySemaphore(backendData.logicalDevice, semaphore, nullptr);
 	semaphore = VK_NULL_HANDLE;
 }
 
-VkFence VulkanBackend::CreateFence(VkDevice device, VkFenceCreateFlags flags)
+VkFence VulkanBackend::CreateFence(const BackendData& backendData, VkFenceCreateFlags flags)
 {
 	VkFenceCreateInfo fenceCreateInfo{};
 	fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 	fenceCreateInfo.flags = flags;
 
 	VkFence fence;
-	VulkanCheck(vkCreateFence(device, &fenceCreateInfo, nullptr, &fence));
+	VulkanCheck(vkCreateFence(backendData.logicalDevice, &fenceCreateInfo, nullptr, &fence));
 	
 	return fence;
 }
 
-void VulkanBackend::DestroyFence(VkDevice device, VkFence& fence)
+void VulkanBackend::DestroyFence(const BackendData& backendData, VkFence& fence)
 {
-	vkDestroyFence(device, fence, nullptr);
+	vkDestroyFence(backendData.logicalDevice, fence, nullptr);
 	fence = VK_NULL_HANDLE;
 }

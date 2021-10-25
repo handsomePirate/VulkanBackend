@@ -7,14 +7,14 @@
 #include <vulkan/vulkan_xlib.h>
 #include <vulkan/vulkan.hpp>
 
-void VulkanBackend::CreateSurface(VkInstance instance, SurfaceData& surfaceData, void* windowHandle, void* connection)
+void VulkanBackend::CreateSurface(const BackendData& backendData, SurfaceData& surfaceData, void* windowHandle, void* connection)
 {
 	VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {};
 	surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
 	surfaceCreateInfo.dpy = (::Display*)connection;
 	surfaceCreateInfo.window = (::Window)windowHandle;
 
-	VulkanCheck(vkCreateXlibSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surfaceData.surface));
+	VulkanCheck(vkCreateXlibSurfaceKHR(backendData.instance, &surfaceCreateInfo, nullptr, &surfaceData.surface));
 }
 
 #endif

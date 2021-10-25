@@ -35,23 +35,23 @@ VkSwapchainKHR VulkanBackend::RecreateSwapchain(const BackendData& backendData, 
 	return swapchain;
 }
 
-void VulkanBackend::DestroySwapchain(VkDevice device, VkSwapchainKHR& swapchain)
+void VulkanBackend::DestroySwapchain(const BackendData& backendData, VkSwapchainKHR& swapchain)
 {
-	vkDestroySwapchainKHR(device, swapchain, nullptr);
+	vkDestroySwapchainKHR(backendData.logicalDevice, swapchain, nullptr);
 	swapchain = VK_NULL_HANDLE;
 }
 
-void VulkanBackend::GetSwapchainImages(VkDevice device, VkSwapchainKHR swapchain, std::vector<VkImage>& images)
+void VulkanBackend::GetSwapchainImages(const BackendData& backendData, VkSwapchainKHR swapchain, std::vector<VkImage>& images)
 {
 	uint32_t imageCount;
-	VulkanCheck(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
+	VulkanCheck(vkGetSwapchainImagesKHR(backendData.logicalDevice, swapchain, &imageCount, nullptr));
 
 	// Get the swap chain images
 	images.resize(imageCount);
-	VulkanCheck(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, images.data()));
+	VulkanCheck(vkGetSwapchainImagesKHR(backendData.logicalDevice, swapchain, &imageCount, images.data()));
 }
 
-VkFramebuffer VulkanBackend::CreateFramebuffer(VkDevice device, uint32_t width, uint32_t height, VkRenderPass renderPass, const std::vector<VkImageView>& attachments)
+VkFramebuffer VulkanBackend::CreateFramebuffer(const BackendData& backendData, uint32_t width, uint32_t height, VkRenderPass renderPass, const std::vector<VkImageView>& attachments)
 {
 	VkFramebufferCreateInfo framebufferCreateInfo{};
 	framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -63,12 +63,12 @@ VkFramebuffer VulkanBackend::CreateFramebuffer(VkDevice device, uint32_t width, 
 	framebufferCreateInfo.layers = 1;
 
 	VkFramebuffer framebuffer;
-	VulkanCheck(vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffer));
+	VulkanCheck(vkCreateFramebuffer(backendData.logicalDevice, &framebufferCreateInfo, nullptr, &framebuffer));
 	return framebuffer;
 }
 
-void VulkanBackend::DestroyFramebuffer(VkDevice device, VkFramebuffer& framebuffer)
+void VulkanBackend::DestroyFramebuffer(const BackendData& backendData, VkFramebuffer& framebuffer)
 {
-	vkDestroyFramebuffer(device, framebuffer, nullptr);
+	vkDestroyFramebuffer(backendData.logicalDevice, framebuffer, nullptr);
 	framebuffer = VK_NULL_HANDLE;
 }

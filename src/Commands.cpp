@@ -1,7 +1,7 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "VulkanBackend/ErrorCheck.hpp"
 
-VkCommandPool VulkanBackend::CreateCommandPool(VkDevice device, uint32_t queueIndex, VkCommandPoolCreateFlags flags)
+VkCommandPool VulkanBackend::CreateCommandPool(const BackendData& backendData, uint32_t queueIndex, VkCommandPoolCreateFlags flags)
 {
 	VkCommandPoolCreateInfo commandPoolCreateInfo{};
 	commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -9,31 +9,31 @@ VkCommandPool VulkanBackend::CreateCommandPool(VkDevice device, uint32_t queueIn
 	commandPoolCreateInfo.flags = flags;
 
 	VkCommandPool commandPool;
-	VulkanCheck(vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &commandPool));
+	VulkanCheck(vkCreateCommandPool(backendData.logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool));
 	
 	return commandPool;
 }
 
-void VulkanBackend::DestroyCommandPool(VkDevice device, VkCommandPool& commandPool)
+void VulkanBackend::DestroyCommandPool(const BackendData& backendData, VkCommandPool& commandPool)
 {
-	vkDestroyCommandPool(device, commandPool, nullptr);
+	vkDestroyCommandPool(backendData.logicalDevice, commandPool, nullptr);
 	commandPool = VK_NULL_HANDLE;
 }
 
-VkCommandBuffer VulkanBackend::AllocateCommandBuffer(VkDevice device, VkCommandPool commandPool,
+VkCommandBuffer VulkanBackend::AllocateCommandBuffer(const BackendData& backendData, VkCommandPool commandPool,
 	VkCommandBufferLevel commandBufferLevel)
 {
 	VkCommandBuffer commandBuffer;
-	AllocateCommandBuffers(device, commandPool, &commandBuffer, 1, commandBufferLevel);
+	AllocateCommandBuffers(backendData, commandPool, &commandBuffer, 1, commandBufferLevel);
 	return commandBuffer;
 }
 
-void VulkanBackend::FreeCommandBuffer(VkDevice device, VkCommandPool commandPool, VkCommandBuffer& commandBuffer)
+void VulkanBackend::FreeCommandBuffer(const BackendData& backendData,VkCommandPool commandPool, VkCommandBuffer& commandBuffer)
 {
-	FreeCommandBuffers(device, commandPool, &commandBuffer, 1);
+	FreeCommandBuffers(backendData, commandPool, &commandBuffer, 1);
 }
 
-void VulkanBackend::AllocateCommandBuffers(VkDevice device, VkCommandPool commandPool, VkCommandBuffer* commandBuffers, uint32_t bufferCount,
+void VulkanBackend::AllocateCommandBuffers(const BackendData& backendData,VkCommandPool commandPool, VkCommandBuffer* commandBuffers, uint32_t bufferCount,
 	VkCommandBufferLevel commandBufferLevel)
 {
 	VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
@@ -42,12 +42,12 @@ void VulkanBackend::AllocateCommandBuffers(VkDevice device, VkCommandPool comman
 	commandBufferAllocateInfo.level = commandBufferLevel;
 	commandBufferAllocateInfo.commandBufferCount = bufferCount;
 
-	VulkanCheck(vkAllocateCommandBuffers(device, &commandBufferAllocateInfo, commandBuffers));
+	VulkanCheck(vkAllocateCommandBuffers(backendData.logicalDevice, &commandBufferAllocateInfo, commandBuffers));
 }
 
-void VulkanBackend::FreeCommandBuffers(VkDevice device, VkCommandPool commandPool, VkCommandBuffer* commandBuffers, uint32_t bufferCount)
+void VulkanBackend::FreeCommandBuffers(const BackendData& backendData,VkCommandPool commandPool, VkCommandBuffer* commandBuffers, uint32_t bufferCount)
 {
-	vkFreeCommandBuffers(device, commandPool, bufferCount, commandBuffers);
+	vkFreeCommandBuffers(backendData.logicalDevice, commandPool, bufferCount, commandBuffers);
 	memset(commandBuffers, 0, sizeof(VkCommandBuffer) * bufferCount);
 }
 
@@ -56,7 +56,7 @@ void VulkanBackend::ResetCommandBuffer(VkCommandBuffer commandBuffer, VkCommandB
 	vkResetCommandBuffer(commandBuffer, flags);
 }
 
-void VulkanBackend::ResetCommandPool(VkDevice device, VkCommandPool commandPool, VkCommandPoolResetFlags flags)
+void VulkanBackend::ResetCommandPool(const BackendData& backendData,VkCommandPool commandPool, VkCommandPoolResetFlags flags)
 {
-	vkResetCommandPool(device, commandPool, flags);
+	vkResetCommandPool(backendData.logicalDevice, commandPool, flags);
 }

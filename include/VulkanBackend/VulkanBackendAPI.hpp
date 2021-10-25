@@ -47,14 +47,14 @@ namespace VulkanBackend
 		uint32_t swapchainImageCount;
 	};
 
-	void CreateSurface(VkInstance instance, SurfaceData& surfaceData, void* windowHandle, void* connection);
-	void DestroySurface(VkInstance instance, VkSurfaceKHR& surface);
+	void CreateSurface(const BackendData& backendData, SurfaceData& surfaceData, void* windowHandle, void* connection);
+	void DestroySurface(const BackendData& backendData, VkSurfaceKHR& surface);
 
-	void GetDepthFormat(VkPhysicalDevice device, SurfaceData& surfaceData);
-	void GetSurfaceFormat(VkPhysicalDevice device, SurfaceData& surfaceData);
-	void GetSurfaceCapabilities(VkPhysicalDevice device, SurfaceData& surfaceData);
-	void GetSurfaceExtent(VkPhysicalDevice device, SurfaceData& surfaceData);
-	void GetPresentMode(VkPhysicalDevice device, SurfaceData& surfaceData, bool vSync = false);
+	void GetDepthFormat(const BackendData& backendData, SurfaceData& surfaceData);
+	void GetSurfaceFormat(const BackendData& backendData, SurfaceData& surfaceData);
+	void GetSurfaceCapabilities(const BackendData& backendData, SurfaceData& surfaceData);
+	void GetSurfaceExtent(const BackendData& backendData, SurfaceData& surfaceData);
+	void GetPresentMode(const BackendData& backendData, SurfaceData& surfaceData, bool vSync = false);
 	void GetSwapchainImageCount(SurfaceData& surfaceData);
 
 	VkPhysicalDeviceMemoryProperties GetDeviceMemoryProperties(VkPhysicalDevice device);
@@ -66,66 +66,78 @@ namespace VulkanBackend
 
 	// ======================== Commands =======================
 
-	VkCommandPool CreateCommandPool(VkDevice device, uint32_t queueIndex, VkCommandPoolCreateFlags flags = 0);
-	void DestroyCommandPool(VkDevice device, VkCommandPool& commandPool);
+	VkCommandPool CreateCommandPool(const BackendData& backendData, uint32_t queueIndex, VkCommandPoolCreateFlags flags = 0);
+	void DestroyCommandPool(const BackendData& backendData, VkCommandPool& commandPool);
 
-	VkCommandBuffer AllocateCommandBuffer(VkDevice device, VkCommandPool commandPool,
+	VkCommandBuffer AllocateCommandBuffer(const BackendData& backendData, VkCommandPool commandPool,
 		VkCommandBufferLevel commandBufferLevel = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-	void FreeCommandBuffer(VkDevice device, VkCommandPool commandPool, VkCommandBuffer& commandBuffer);
+	void FreeCommandBuffer(const BackendData& backendData, VkCommandPool commandPool, VkCommandBuffer& commandBuffer);
 
-	void AllocateCommandBuffers(VkDevice device, VkCommandPool commandPool, VkCommandBuffer* commandBuffers, uint32_t bufferCount,
+	void AllocateCommandBuffers(const BackendData& backendData, VkCommandPool commandPool, VkCommandBuffer* commandBuffers, uint32_t bufferCount,
 		VkCommandBufferLevel commandBufferLevel = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-	void FreeCommandBuffers(VkDevice device, VkCommandPool commandPool, VkCommandBuffer* commandBuffers, uint32_t bufferCount);
+	void FreeCommandBuffers(const BackendData& backendData, VkCommandPool commandPool, VkCommandBuffer* commandBuffers, uint32_t bufferCount);
 
 	void ResetCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferResetFlags flags = 0);
-	void ResetCommandPool(VkDevice device, VkCommandPool commandPool, VkCommandPoolResetFlags flags = 0);
+	void ResetCommandPool(const BackendData& backendData, VkCommandPool commandPool, VkCommandPoolResetFlags flags = 0);
 
 	// ==================== Synchronization ====================
 
-	VkSemaphore CreateSemaphore(VkDevice device);
-	void DestroySemaphore(VkDevice device, VkSemaphore& semaphore);
+	VkSemaphore CreateSemaphore(const BackendData& backendData);
+	void DestroySemaphore(const BackendData& backendData, VkSemaphore& semaphore);
 
-	VkFence CreateFence(VkDevice device, VkFenceCreateFlags flags = 0);
-	void DestroyFence(VkDevice device, VkFence& fence);
+	VkFence CreateFence(const BackendData& backendData, VkFenceCreateFlags flags = 0);
+	void DestroyFence(const BackendData& backendData, VkFence& fence);
 
 	// ========================= Memory ========================
 
-	VkDeviceMemory AllocateMemory(VkDevice device, VkDeviceSize size, uint32_t memoryTypeIndex,
+	VkDeviceMemory AllocateMemory(const BackendData& backendData, VkDeviceSize size, uint32_t memoryTypeIndex,
 		VkPhysicalDeviceMemoryProperties deviceMemoryProperties, VkMemoryPropertyFlags memoryProperties);
-	void FreeMemory(VkDevice device, VkDeviceMemory& memory);
+	void FreeMemory(const BackendData& backendData, VkDeviceMemory& memory);
 
-	VkMemoryRequirements GetImageMemoryRequirements(VkDevice device, VkImage image);
-	VkMemoryRequirements GetBufferMemoryRequirements(VkDevice device, VkBuffer buffer);
+	VkMemoryRequirements GetImageMemoryRequirements(const BackendData& backendData, VkImage image);
+	VkMemoryRequirements GetBufferMemoryRequirements(const BackendData& backendData, VkBuffer buffer);
 
-	void* MapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags = 0);
-	void UnmapMemory(VkDevice device, VkDeviceMemory memory);
-	void FlushMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size);
-	void InvalidateMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size);
+	void* MapMemory(const BackendData& backendData, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags = 0);
+	void UnmapMemory(const BackendData& backendData, VkDeviceMemory memory);
+	void FlushMemory(const BackendData& backendData, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size);
+	void InvalidateMemory(const BackendData& backendData, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size);
 
-	void BindImageMemory(VkDevice device, VkImage image, VkDeviceMemory memory, VkDeviceSize offset = 0);
+	void BindImageMemory(const BackendData& backendData, VkImage image, VkDeviceMemory memory, VkDeviceSize offset = 0);
 
 	// ======================= Resources =======================
 	
-	VkImage CreateImage2D(VkDevice device, uint32_t width, uint32_t height, uint32_t layerCount, uint32_t mipCount, VkImageUsageFlags usage,
-		VkFormat format, VkImageTiling imageTiling = VK_IMAGE_TILING_OPTIMAL, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
-	void DestroyImage(VkDevice device, VkImage& image);
+	struct Image
+	{
+		VkImage image;
+		VmaAllocation allocation;
+	};
 
-	VkImageView CreateImageView2D(VkDevice device, VkImage image, VkFormat format, VkImageSubresourceRange subresource);
-	void DestroyImageView(VkDevice device, VkImageView& imageView);
+	Image CreateImage2D(const BackendData& backendData, uint32_t width, uint32_t height, uint32_t layerCount, uint32_t mipCount, VkImageUsageFlags usage,
+		VkFormat format, VmaMemoryUsage residency, VkImageTiling imageTiling = VK_IMAGE_TILING_OPTIMAL, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
+	void DestroyImage(const BackendData& backendData, Image& image);
 
-	VkSampler CreateImageSampler(VkDevice device, VkFilter magnificationFilter, VkFilter minificationFilter, VkBorderColor borderColor,
+	VkImageView CreateImageView2D(const BackendData& backendData, VkImage image, VkFormat format, VkImageSubresourceRange subresource);
+	void DestroyImageView(const BackendData& backendData, VkImageView& imageView);
+
+	VkSampler CreateImageSampler(const BackendData& backendData, VkFilter magnificationFilter, VkFilter minificationFilter, VkBorderColor borderColor,
 		VkSamplerAddressMode uAddressMode, VkSamplerAddressMode vAddressMode, VkSamplerAddressMode wAddressMode,
 		float minLod, float maxLod, float mipLodBias = 0.f, VkSamplerMipmapMode mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR, float maxAnisotropy = 1.f);
-	void DestroyImageSampler(VkDevice device, VkSampler& sampler);
+	void DestroyImageSampler(const BackendData& backendData, VkSampler& sampler);
 
-	VkBuffer CreateBuffer(VkDevice device, VkBufferUsageFlags usage, VkDeviceSize size);
-	void DestroyBuffer(VkDevice device, VkBuffer& buffer);
+	struct Buffer
+	{
+		VkBuffer buffer;
+		VmaAllocation allocation;
+	};
 
-	void CopyBufferToBuffer(VkDevice device, VkBuffer source, VkBuffer destination, VkDeviceSize size, VkCommandBuffer commandBuffer,
+	Buffer CreateBuffer(const BackendData& backendData, VkBufferUsageFlags usage, VkDeviceSize size, VmaMemoryUsage residency);
+	void DestroyBuffer(const BackendData& backendData, Buffer& buffer);
+
+	void CopyBufferToBuffer(const BackendData& backendData, VkBuffer source, VkBuffer destination, VkDeviceSize size, VkCommandBuffer commandBuffer,
 		VkQueue queue, VkDeviceSize sourceOffset = 0, VkDeviceSize destinationOffset = 0);
-	void CopyBufferToImage(VkDevice device, VkBuffer source, VkImage destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
+	void CopyBufferToImage(const BackendData& backendData, VkBuffer source, VkImage destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
 		VkQueue queue, uint32_t width, uint32_t height, VkImageAspectFlags aspect);
-	void CopyImageToBuffer(VkDevice device, VkImage source, VkBuffer destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
+	void CopyImageToBuffer(const BackendData& backendData, VkImage source, VkBuffer destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
 		VkQueue queue, uint32_t width, uint32_t height, VkImageAspectFlags aspect, int32_t xOffset = 0, int32_t yOffset = 0);
 
 	// ====================== Presentation =====================
@@ -135,48 +147,48 @@ namespace VulkanBackend
 	VkSwapchainKHR RecreateSwapchain(const BackendData& backendData, const SurfaceData& surfaceData,
 		VkSwapchainKHR& oldSwapchain, VkImageUsageFlags imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 		VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE);
-	void DestroySwapchain(VkDevice device, VkSwapchainKHR& swapchain);
+	void DestroySwapchain(const BackendData& backendData, VkSwapchainKHR& swapchain);
 
-	void GetSwapchainImages(VkDevice device, VkSwapchainKHR swapchain, std::vector<VkImage>& images);
+	void GetSwapchainImages(const BackendData& backendData, VkSwapchainKHR swapchain, std::vector<VkImage>& images);
 
-	VkFramebuffer CreateFramebuffer(VkDevice device, uint32_t width, uint32_t height, VkRenderPass renderPass,
+	VkFramebuffer CreateFramebuffer(const BackendData& backendData, uint32_t width, uint32_t height, VkRenderPass renderPass,
 		const std::vector<VkImageView>& attachments);
-	void DestroyFramebuffer(VkDevice device, VkFramebuffer& framebuffer);
+	void DestroyFramebuffer(const BackendData& backendData, VkFramebuffer& framebuffer);
 
 	// ======================== Pipeline =======================
 
-	VkRenderPass CreateRenderPass(VkDevice device, const SurfaceData& surfaceData);
-	void DestroyRenderPass(VkDevice device, VkRenderPass& renderPass);
+	VkRenderPass CreateRenderPass(const BackendData& backendData, const SurfaceData& surfaceData);
+	void DestroyRenderPass(const BackendData& backendData, VkRenderPass& renderPass);
 
-	VkPipelineCache CreatePipelineCache(VkDevice device);
-	void DestroyPipelineCache(VkDevice device, VkPipelineCache& pipelineCache);
+	VkPipelineCache CreatePipelineCache(const BackendData& backendData);
+	void DestroyPipelineCache(const BackendData& backendData, VkPipelineCache& pipelineCache);
 
-	VkPipelineLayout CreatePipelineLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, VkPushConstantRange pushConstantRange);
-	void DestroyPipelineLayout(VkDevice device, VkPipelineLayout& pipelineLayout);
+	VkPipelineLayout CreatePipelineLayout(const BackendData& backendData, VkDescriptorSetLayout descriptorSetLayout, VkPushConstantRange pushConstantRange);
+	void DestroyPipelineLayout(const BackendData& backendData, VkPipelineLayout& pipelineLayout);
 
-	VkPipeline CreateGraphicsPipeline(VkDevice device, VkPrimitiveTopology primitiveTopology, VkPolygonMode polygonMode,
+	VkPipeline CreateGraphicsPipeline(const BackendData& backendData, VkPrimitiveTopology primitiveTopology, VkPolygonMode polygonMode,
 		VkCullModeFlags cullMode, VkFrontFace frontFace, VkColorComponentFlags colorComponents, VkBool32 depthTestEnable,
 		VkBool32 depthWriteEnable, VkCompareOp compareOp, VkSampleCountFlagBits sampleCount, const std::vector<VkDynamicState>& dynamicStates,
 		VkPipelineVertexInputStateCreateInfo& vertexInputState, VkRenderPass renderPass, VkPipelineLayout pipelineLayout,
 		const std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkPipelineCache pipelineCache = VK_NULL_HANDLE);
-	VkPipeline CreateComputePipeline(VkDevice device, VkPipelineLayout pipelineLayout, VkPipelineShaderStageCreateInfo& shaderStage, VkPipelineCache pipelineCache);
-	void DestroyPipeline(VkDevice device, VkPipeline& pipeline);
+	VkPipeline CreateComputePipeline(const BackendData& backendData, VkPipelineLayout pipelineLayout, VkPipelineShaderStageCreateInfo& shaderStage, VkPipelineCache pipelineCache);
+	void DestroyPipeline(const BackendData& backendData, VkPipeline& pipeline);
 
 	// ========================= Shader ========================
 
-	VkDescriptorPool CreateDescriptorPool(VkDevice device, const std::vector<VkDescriptorPoolSize> poolSizes, uint32_t maxSets);
-	void DestroyDescriptorPool(VkDevice device, VkDescriptorPool& descriptorPool);
+	VkDescriptorPool CreateDescriptorPool(const BackendData& backendData, const std::vector<VkDescriptorPoolSize> poolSizes, uint32_t maxSets);
+	void DestroyDescriptorPool(const BackendData& backendData, VkDescriptorPool& descriptorPool);
 	
-	VkDescriptorSetLayout CreateDescriptorSetLayout(VkDevice device, const std::vector<VkDescriptorSetLayoutBinding>& layoutBindings);
-	void DestroyDescriptorSetLayout(VkDevice device, VkDescriptorSetLayout& descriptorSetLayout);
+	VkDescriptorSetLayout CreateDescriptorSetLayout(const BackendData& backendData, const std::vector<VkDescriptorSetLayoutBinding>& layoutBindings);
+	void DestroyDescriptorSetLayout(const BackendData& backendData, VkDescriptorSetLayout& descriptorSetLayout);
 	
-	VkDescriptorSet AllocateDescriptorSet(VkDevice device, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout);
-	void FreeDescriptorSet(VkDevice device, VkDescriptorPool descriptorPool, VkDescriptorSet& descriptorSet);
+	VkDescriptorSet AllocateDescriptorSet(const BackendData& backendData, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout);
+	void FreeDescriptorSet(const BackendData& backendData, VkDescriptorPool descriptorPool, VkDescriptorSet& descriptorSet);
 	
-	VkShaderModule CreateShaderModule(VkDevice device, const std::vector<uint32_t>& bytes);
-	void DestroyShaderModule(VkDevice device, VkShaderModule& shaderModule);
+	VkShaderModule CreateShaderModule(const BackendData& backendData, const std::vector<uint32_t>& bytes);
+	void DestroyShaderModule(const BackendData& backendData, VkShaderModule& shaderModule);
 
-	void WriteDescriptorSets(VkDevice device, VkDescriptorSet descriptorSet,
+	void WriteDescriptorSets(const BackendData& backendData, VkDescriptorSet descriptorSet,
 		const std::vector<VkDescriptorImageInfo>& imageDescriptors,
 		const std::vector<VkDescriptorImageInfo>& storageBufferDescriptors,
 		const std::vector<VkDescriptorImageInfo>& uniformBufferDescriptors);

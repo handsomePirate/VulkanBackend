@@ -1,7 +1,7 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "VulkanBackend/ErrorCheck.hpp"
 
-VkRenderPass VulkanBackend::CreateRenderPass(VkDevice device, const SurfaceData& surfaceData)
+VkRenderPass VulkanBackend::CreateRenderPass(const BackendData& backendData, const SurfaceData& surfaceData)
 {
 	const int attachmentCount = 1;
 	VkAttachmentDescription attachments[attachmentCount];
@@ -72,33 +72,33 @@ VkRenderPass VulkanBackend::CreateRenderPass(VkDevice device, const SurfaceData&
 	renderPassInfo.pDependencies = dependencies;
 
 	VkRenderPass renderPass;
-	VulkanCheck(vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass));
+	VulkanCheck(vkCreateRenderPass(backendData.logicalDevice, &renderPassInfo, nullptr, &renderPass));
 	return renderPass;
 }
 
-void VulkanBackend::DestroyRenderPass(VkDevice device, VkRenderPass& renderPass)
+void VulkanBackend::DestroyRenderPass(const BackendData& backendData, VkRenderPass& renderPass)
 {
-	vkDestroyRenderPass(device, renderPass, nullptr);
+	vkDestroyRenderPass(backendData.logicalDevice, renderPass, nullptr);
 	renderPass = VK_NULL_HANDLE;
 }
 
-VkPipelineCache VulkanBackend::CreatePipelineCache(VkDevice device)
+VkPipelineCache VulkanBackend::CreatePipelineCache(const BackendData& backendData)
 {
 	VkPipelineCacheCreateInfo pipelineCacheCreateInfo{};
 	pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 
 	VkPipelineCache pipelineCache;
-	VulkanCheck(vkCreatePipelineCache(device, &pipelineCacheCreateInfo, nullptr, &pipelineCache));
+	VulkanCheck(vkCreatePipelineCache(backendData.logicalDevice, &pipelineCacheCreateInfo, nullptr, &pipelineCache));
 	return pipelineCache;
 }
 
-void VulkanBackend::DestroyPipelineCache(VkDevice device, VkPipelineCache& pipelineCache)
+void VulkanBackend::DestroyPipelineCache(const BackendData& backendData, VkPipelineCache& pipelineCache)
 {
-	vkDestroyPipelineCache(device, pipelineCache, nullptr);
+	vkDestroyPipelineCache(backendData.logicalDevice, pipelineCache, nullptr);
 	pipelineCache = VK_NULL_HANDLE;
 }
 
-VkPipelineLayout VulkanBackend::CreatePipelineLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, VkPushConstantRange pushConstantRange)
+VkPipelineLayout VulkanBackend::CreatePipelineLayout(const BackendData& backendData, VkDescriptorSetLayout descriptorSetLayout, VkPushConstantRange pushConstantRange)
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
 	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -108,17 +108,17 @@ VkPipelineLayout VulkanBackend::CreatePipelineLayout(VkDevice device, VkDescript
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
 	VkPipelineLayout pipelineLayout;
-	VulkanCheck(vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+	VulkanCheck(vkCreatePipelineLayout(backendData.logicalDevice, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout));
 	return pipelineLayout;
 }
 
-void VulkanBackend::DestroyPipelineLayout(VkDevice device, VkPipelineLayout& pipelineLayout)
+void VulkanBackend::DestroyPipelineLayout(const BackendData& backendData, VkPipelineLayout& pipelineLayout)
 {
-	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+	vkDestroyPipelineLayout(backendData.logicalDevice, pipelineLayout, nullptr);
 	pipelineLayout = VK_NULL_HANDLE;
 }
 
-VkPipeline VulkanBackend::CreateGraphicsPipeline(VkDevice device, VkPrimitiveTopology primitiveTopology, VkPolygonMode polygonMode,
+VkPipeline VulkanBackend::CreateGraphicsPipeline(const BackendData& backendData, VkPrimitiveTopology primitiveTopology, VkPolygonMode polygonMode,
 	VkCullModeFlags cullMode, VkFrontFace frontFace, VkColorComponentFlags colorComponents, VkBool32 depthTestEnable,
 	VkBool32 depthWriteEnable, VkCompareOp compareOp, VkSampleCountFlagBits sampleCount, const std::vector<VkDynamicState>& dynamicStates,
 	VkPipelineVertexInputStateCreateInfo& vertexInputState, VkRenderPass renderPass, VkPipelineLayout pipelineLayout,
@@ -192,11 +192,11 @@ VkPipeline VulkanBackend::CreateGraphicsPipeline(VkDevice device, VkPrimitiveTop
 	pipelineCreateInfo.renderPass = renderPass;
 
 	VkPipeline pipeline;
-	VulkanCheck(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
+	VulkanCheck(vkCreateGraphicsPipelines(backendData.logicalDevice, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
 	return pipeline;
 }
 
-VkPipeline VulkanBackend::CreateComputePipeline(VkDevice device, VkPipelineLayout pipelineLayout, VkPipelineShaderStageCreateInfo& shaderStage,
+VkPipeline VulkanBackend::CreateComputePipeline(const BackendData& backendData, VkPipelineLayout pipelineLayout, VkPipelineShaderStageCreateInfo& shaderStage,
 	VkPipelineCache pipelineCache)
 {
 	VkComputePipelineCreateInfo computePipelineCreateInfo{};
@@ -205,12 +205,12 @@ VkPipeline VulkanBackend::CreateComputePipeline(VkDevice device, VkPipelineLayou
 	computePipelineCreateInfo.stage = shaderStage;
 
 	VkPipeline pipeline;
-	VulkanCheck(vkCreateComputePipelines(device, pipelineCache, 1, &computePipelineCreateInfo, nullptr, &pipeline));
+	VulkanCheck(vkCreateComputePipelines(backendData.logicalDevice, pipelineCache, 1, &computePipelineCreateInfo, nullptr, &pipeline));
 	return pipeline;
 }
 
-void VulkanBackend::DestroyPipeline(VkDevice device, VkPipeline& pipeline)
+void VulkanBackend::DestroyPipeline(const BackendData& backendData, VkPipeline& pipeline)
 {
-	vkDestroyPipeline(device, pipeline, nullptr);
+	vkDestroyPipeline(backendData.logicalDevice, pipeline, nullptr);
 	pipeline = VK_NULL_HANDLE;
 }

@@ -1,7 +1,7 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "VulkanBackend/ErrorCheck.hpp"
 
-VkDescriptorPool VulkanBackend::CreateDescriptorPool(VkDevice device, const std::vector<VkDescriptorPoolSize> poolSizes, uint32_t maxSets)
+VkDescriptorPool VulkanBackend::CreateDescriptorPool(const BackendData& backendData, const std::vector<VkDescriptorPoolSize> poolSizes, uint32_t maxSets)
 {
 	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
 	descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -10,17 +10,17 @@ VkDescriptorPool VulkanBackend::CreateDescriptorPool(VkDevice device, const std:
 	descriptorPoolCreateInfo.maxSets = maxSets;
 
 	VkDescriptorPool descriptorPool;
-	VulkanCheck(vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool));
+	VulkanCheck(vkCreateDescriptorPool(backendData.logicalDevice, &descriptorPoolCreateInfo, nullptr, &descriptorPool));
 	return descriptorPool;
 }
 
-void VulkanBackend::DestroyDescriptorPool(VkDevice device, VkDescriptorPool& descriptorPool)
+void VulkanBackend::DestroyDescriptorPool(const BackendData& backendData, VkDescriptorPool& descriptorPool)
 {
-	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+	vkDestroyDescriptorPool(backendData.logicalDevice, descriptorPool, nullptr);
 	descriptorPool = VK_NULL_HANDLE;
 }
 
-VkDescriptorSetLayout VulkanBackend::CreateDescriptorSetLayout(VkDevice device, const std::vector<VkDescriptorSetLayoutBinding>& layoutBindings)
+VkDescriptorSetLayout VulkanBackend::CreateDescriptorSetLayout(const BackendData& backendData, const std::vector<VkDescriptorSetLayoutBinding>& layoutBindings)
 {
 	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
 	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -28,17 +28,17 @@ VkDescriptorSetLayout VulkanBackend::CreateDescriptorSetLayout(VkDevice device, 
 	descriptorSetLayoutCreateInfo.pBindings = layoutBindings.data();
 
 	VkDescriptorSetLayout descriptorSetLayout;
-	VulkanCheck(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout));
+	VulkanCheck(vkCreateDescriptorSetLayout(backendData.logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout));
 	return descriptorSetLayout;
 }
 
-void VulkanBackend::DestroyDescriptorSetLayout(VkDevice device, VkDescriptorSetLayout& descriptorSetLayout)
+void VulkanBackend::DestroyDescriptorSetLayout(const BackendData& backendData, VkDescriptorSetLayout& descriptorSetLayout)
 {
-	vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+	vkDestroyDescriptorSetLayout(backendData.logicalDevice, descriptorSetLayout, nullptr);
 	descriptorSetLayout = VK_NULL_HANDLE;
 }
 
-VkDescriptorSet VulkanBackend::AllocateDescriptorSet(VkDevice device, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout)
+VkDescriptorSet VulkanBackend::AllocateDescriptorSet(const BackendData& backendData, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout)
 {
 	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{};
 	descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -47,17 +47,17 @@ VkDescriptorSet VulkanBackend::AllocateDescriptorSet(VkDevice device, VkDescript
 	descriptorSetAllocateInfo.descriptorSetCount = 1;
 
 	VkDescriptorSet descriptorSet;
-	VulkanCheck(vkAllocateDescriptorSets(device, &descriptorSetAllocateInfo, &descriptorSet));
+	VulkanCheck(vkAllocateDescriptorSets(backendData.logicalDevice, &descriptorSetAllocateInfo, &descriptorSet));
 	return descriptorSet;
 }
 
-void VulkanBackend::FreeDescriptorSet(VkDevice device, VkDescriptorPool descriptorPool, VkDescriptorSet& descriptorSet)
+void VulkanBackend::FreeDescriptorSet(const BackendData& backendData, VkDescriptorPool descriptorPool, VkDescriptorSet& descriptorSet)
 {
-	vkFreeDescriptorSets(device, descriptorPool, 1, &descriptorSet);
+	vkFreeDescriptorSets(backendData.logicalDevice, descriptorPool, 1, &descriptorSet);
 	descriptorSet = VK_NULL_HANDLE;
 }
 
-VkShaderModule VulkanBackend::CreateShaderModule(VkDevice device, const std::vector<uint32_t>& data)
+VkShaderModule VulkanBackend::CreateShaderModule(const BackendData& backendData, const std::vector<uint32_t>& data)
 {
 	VkShaderModuleCreateInfo shaderModuleCreateInfo{};
 	shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -65,17 +65,17 @@ VkShaderModule VulkanBackend::CreateShaderModule(VkDevice device, const std::vec
 	shaderModuleCreateInfo.pCode = data.data();
 
 	VkShaderModule shaderModule;
-	VulkanCheck(vkCreateShaderModule(device, &shaderModuleCreateInfo, nullptr, &shaderModule));
+	VulkanCheck(vkCreateShaderModule(backendData.logicalDevice, &shaderModuleCreateInfo, nullptr, &shaderModule));
 	return shaderModule;
 }
 
-void VulkanBackend::DestroyShaderModule(VkDevice device, VkShaderModule& shaderModule)
+void VulkanBackend::DestroyShaderModule(const BackendData& backendData, VkShaderModule& shaderModule)
 {
-	vkDestroyShaderModule(device, shaderModule, nullptr);
+	vkDestroyShaderModule(backendData.logicalDevice, shaderModule, nullptr);
 	shaderModule = VK_NULL_HANDLE;
 }
 
-void VulkanBackend::WriteDescriptorSets(VkDevice device, VkDescriptorSet descriptorSet,
+void VulkanBackend::WriteDescriptorSets(const BackendData& backendData, VkDescriptorSet descriptorSet,
 	const std::vector<VkDescriptorImageInfo>& imageDescriptors,
 	const std::vector<VkDescriptorImageInfo>& storageBufferDescriptors,
 	const std::vector<VkDescriptorImageInfo>& uniformBufferDescriptors)
@@ -121,5 +121,5 @@ void VulkanBackend::WriteDescriptorSets(VkDevice device, VkDescriptorSet descrip
 		++currentSet;
 	}
 
-	vkUpdateDescriptorSets(device, setCount, writeDescriptorSets.data(), 0, nullptr);
+	vkUpdateDescriptorSets(backendData.logicalDevice, setCount, writeDescriptorSets.data(), 0, nullptr);
 }

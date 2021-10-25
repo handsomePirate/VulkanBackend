@@ -1,8 +1,8 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "VulkanBackend/ErrorCheck.hpp"
 
-VkImage VulkanBackend::CreateImage2D(VkDevice device, uint32_t width, uint32_t height, uint32_t layerCount, uint32_t mipCount,
-	VkImageUsageFlags usage, VkFormat format, VkImageTiling imageTiling, VkSampleCountFlagBits samples)
+VulkanBackend::Image VulkanBackend::CreateImage2D(const BackendData& backendData, uint32_t width, uint32_t height, uint32_t layerCount, uint32_t mipCount,
+	VkImageUsageFlags usage, VkFormat format, VmaMemoryUsage residency, VkImageTiling imageTiling, VkSampleCountFlagBits samples)
 {
 	VkImageCreateInfo imageCreateInfo{};
 	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -15,19 +15,23 @@ VkImage VulkanBackend::CreateImage2D(VkDevice device, uint32_t width, uint32_t h
 	imageCreateInfo.tiling = imageTiling;
 	imageCreateInfo.usage = usage;
 
-	VkImage image;
-	VulkanCheck(vkCreateImage(device, &imageCreateInfo, nullptr, &image));
+	VmaAllocationCreateInfo allocationInfo{};
+	allocationInfo.usage = residency;
+
+	Image image;
+	VulkanCheck(vmaCreateImage(backendData.allocator, &imageCreateInfo, &allocationInfo, &image.image, &image.allocation, nullptr));
 
 	return image;
 }
 
-void VulkanBackend::DestroyImage(VkDevice device, VkImage& image)
+void VulkanBackend::DestroyImage(const BackendData& backendData, VulkanBackend::Image& image)
 {
-	vkDestroyImage(device, image, nullptr);
-	image = VK_NULL_HANDLE;
+	vmaDestroyImage(backendData.allocator, image.image, image.allocation);
+	image.image = VK_NULL_HANDLE;
+	image.allocation = VK_NULL_HANDLE;
 }
 
-VkImageView VulkanBackend::CreateImageView2D(VkDevice device, VkImage image, VkFormat format, VkImageSubresourceRange subresource)
+VkImageView VulkanBackend::CreateImageView2D(const BackendData& backendData, VkImage image, VkFormat format, VkImageSubresourceRange subresource)
 {
 	VkImageViewCreateInfo imageViewCreateInfo = {};
 	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -37,18 +41,18 @@ VkImageView VulkanBackend::CreateImageView2D(VkDevice device, VkImage image, VkF
 	imageViewCreateInfo.subresourceRange = subresource;
 
 	VkImageView imageView;
-	VulkanCheck(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageView));
+	VulkanCheck(vkCreateImageView(backendData.logicalDevice, &imageViewCreateInfo, nullptr, &imageView));
 
 	return imageView;
 }
 
-void VulkanBackend::DestroyImageView(VkDevice device, VkImageView& imageView)
+void VulkanBackend::DestroyImageView(const BackendData& backendData, VkImageView& imageView)
 {
-	vkDestroyImageView(device, imageView, nullptr);
+	vkDestroyImageView(backendData.logicalDevice, imageView, nullptr);
 	imageView = VK_NULL_HANDLE;
 }
 
-VkSampler VulkanBackend::CreateImageSampler(VkDevice device, VkFilter magnificationFilter, VkFilter minificationFilter, VkBorderColor borderColor,
+VkSampler VulkanBackend::CreateImageSampler(const BackendData& backendData, VkFilter magnificationFilter, VkFilter minificationFilter, VkBorderColor borderColor,
 	VkSamplerAddressMode uAddressMode, VkSamplerAddressMode vAddressMode, VkSamplerAddressMode wAddressMode,
 	float minLod, float maxLod, float mipLodBias, VkSamplerMipmapMode mipmapMode, float maxAnisotropy)
 {
@@ -67,18 +71,19 @@ VkSampler VulkanBackend::CreateImageSampler(VkDevice device, VkFilter magnificat
 	samplerCreateInfo.mipLodBias = mipLodBias;
 
 	VkSampler sampler;
-	VulkanCheck(vkCreateSampler(device, &samplerCreateInfo, nullptr, &sampler));
+	VulkanCheck(vkCreateSampler(backendData.logicalDevice, &samplerCreateInfo, nullptr, &sampler));
 
 	return sampler;
 }
 
-void VulkanBackend::DestroyImageSampler(VkDevice device, VkSampler& sampler)
+void VulkanBackend::DestroyImageSampler(const BackendData& backendData, VkSampler& sampler)
 {
-	vkDestroySampler(device, sampler, nullptr);
+	vkDestroySampler(backendData.logicalDevice, sampler, nullptr);
 	sampler = VK_NULL_HANDLE;
 }
 
-VkBuffer VulkanBackend::CreateBuffer(VkDevice device, VkBufferUsageFlags usage, VkDeviceSize size)
+VulkanBackend::Buffer VulkanBackend::CreateBuffer(const BackendData& backendData, VkBufferUsageFlags usage, VkDeviceSize size,
+	VmaMemoryUsage residency)
 {
 	VkBufferCreateInfo bufferCreateInfo{};
 	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -86,18 +91,23 @@ VkBuffer VulkanBackend::CreateBuffer(VkDevice device, VkBufferUsageFlags usage, 
 	bufferCreateInfo.size = size;
 	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	VkBuffer buffer;
-	VulkanCheck(vkCreateBuffer(device, &bufferCreateInfo, nullptr, &buffer));
+	VmaAllocationCreateInfo allocationInfo{};
+	allocationInfo.usage = residency;
+
+	Buffer buffer;
+	VulkanCheck(vmaCreateBuffer(backendData.allocator, &bufferCreateInfo, &allocationInfo, &buffer.buffer, &buffer.allocation, nullptr));
+
 	return buffer;
 }
 
-void VulkanBackend::DestroyBuffer(VkDevice device, VkBuffer& buffer)
+void VulkanBackend::DestroyBuffer(const BackendData& backendData, VulkanBackend::Buffer& buffer)
 {
-	vkDestroyBuffer(device, buffer, nullptr);
-	buffer = VK_NULL_HANDLE;
+	vmaDestroyBuffer(backendData.allocator, buffer.buffer, buffer.allocation);
+	buffer.buffer = VK_NULL_HANDLE;
+	buffer.allocation = VK_NULL_HANDLE;
 }
 
-void VulkanBackend::CopyBufferToBuffer(VkDevice device, VkBuffer source, VkBuffer destination, VkDeviceSize size, VkCommandBuffer commandBuffer,
+void VulkanBackend::CopyBufferToBuffer(const BackendData& backendData, VkBuffer source, VkBuffer destination, VkDeviceSize size, VkCommandBuffer commandBuffer,
 	VkQueue queue, VkDeviceSize sourceOffset, VkDeviceSize destinationOffset)
 {
 	VkBufferCopy bufferCopy{};
@@ -107,7 +117,7 @@ void VulkanBackend::CopyBufferToBuffer(VkDevice device, VkBuffer source, VkBuffe
 	vkCmdCopyBuffer(commandBuffer, source, destination, 1, &bufferCopy);
 }
 
-void VulkanBackend::CopyBufferToImage(VkDevice device, VkBuffer source, VkImage destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
+void VulkanBackend::CopyBufferToImage(const BackendData& backendData, VkBuffer source, VkImage destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
 	VkQueue queue, uint32_t width, uint32_t height, VkImageAspectFlags aspect)
 {
 	VkBufferImageCopy bufferImageCopy{};
@@ -119,7 +129,7 @@ void VulkanBackend::CopyBufferToImage(VkDevice device, VkBuffer source, VkImage 
 	vkCmdCopyBufferToImage(commandBuffer, source, destination, layout, 1, &bufferImageCopy);
 }
 
-void VulkanBackend::CopyImageToBuffer(VkDevice device, VkImage source, VkBuffer destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
+void VulkanBackend::CopyImageToBuffer(const BackendData& backendData, VkImage source, VkBuffer destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
 	VkQueue queue, uint32_t width, uint32_t height, VkImageAspectFlags aspect, int32_t xOffset, int32_t yOffset)
 {
 	VkBufferImageCopy bufferImageCopy{};

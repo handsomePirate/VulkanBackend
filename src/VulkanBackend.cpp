@@ -497,13 +497,13 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 		}
 	}
 	
-	VmaAllocatorCreateInfo allocatorInfo = {};
+	VmaAllocatorCreateInfo allocatorInfo{};
 	allocatorInfo.vulkanApiVersion = vulkanApplicationInfo.apiVersion;
 	allocatorInfo.physicalDevice = backendData.physicalDevice;
 	allocatorInfo.device = backendData.logicalDevice;
 	allocatorInfo.instance = backendData.instance;
 	
-	vmaCreateAllocator(&allocatorInfo, &backendData.allocator);
+	VulkanCheck(vmaCreateAllocator(&allocatorInfo, &backendData.allocator));
 
 	// Returning the initialized Vulkan structures.
 	return backendData;
@@ -530,12 +530,12 @@ void VulkanBackend::Shutdown(BackendData& backendData)
 	DestroyInstance(backendData);
 }
 
-void VulkanBackend::DestroySurface(VkInstance instance, VkSurfaceKHR& surface)
+void VulkanBackend::DestroySurface(const BackendData& backendData, VkSurfaceKHR& surface)
 {
-	vkDestroySurfaceKHR(instance, surface, nullptr);
+	vkDestroySurfaceKHR(backendData.instance, surface, nullptr);
 }
 
-void VulkanBackend::GetDepthFormat(VkPhysicalDevice device, SurfaceData& surfaceData)
+void VulkanBackend::GetDepthFormat(const BackendData& backendData, SurfaceData& surfaceData)
 {
 	// Since all depth formats may be optional, we need to find a suitable depth format to use.
 	// Start with the highest precision packed format.
@@ -551,7 +551,7 @@ void VulkanBackend::GetDepthFormat(VkPhysicalDevice device, SurfaceData& surface
 	for (auto& format : depthFormats)
 	{
 		VkFormatProperties formatProperties;
-		vkGetPhysicalDeviceFormatProperties(device, format, &formatProperties);
+		vkGetPhysicalDeviceFormatProperties(backendData.physicalDevice, format, &formatProperties);
 		// Format must support depth stencil attachment for optimal tiling
 		if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
 		{
@@ -563,18 +563,18 @@ void VulkanBackend::GetDepthFormat(VkPhysicalDevice device, SurfaceData& surface
 	surfaceData.depthFormat = VK_FORMAT_UNDEFINED;
 }
 
-void VulkanBackend::GetSurfaceFormat(VkPhysicalDevice device, SurfaceData& surfaceData)
+void VulkanBackend::GetSurfaceFormat(const BackendData& backendData, SurfaceData& surfaceData)
 {
 	// Get list of supported surface formats
 	uint32_t formatCount;
-	VulkanCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(device, surfaceData.surface, &formatCount, NULL));
+	VulkanCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(backendData.physicalDevice, surfaceData.surface, &formatCount, NULL));
 	if (formatCount == 0)
 	{
 		CoreLogError(VulkanLogger, "Vulkan: Couldn't find a surface format.");
 	}
 
 	std::vector<VkSurfaceFormatKHR> surfaceFormats(formatCount);
-	VulkanCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(device, surfaceData.surface, &formatCount, surfaceFormats.data()));
+	VulkanCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(backendData.physicalDevice, surfaceData.surface, &formatCount, surfaceFormats.data()));
 
 	// If the surface format list only includes one entry with VK_FORMAT_UNDEFINED,
 	// there is no preferered format, so we assume VK_FORMAT_B8G8R8A8_UNORM
@@ -604,9 +604,9 @@ void VulkanBackend::GetSurfaceFormat(VkPhysicalDevice device, SurfaceData& surfa
 	}
 }
 
-void VulkanBackend::GetSurfaceCapabilities(VkPhysicalDevice device, SurfaceData& surfaceData)
+void VulkanBackend::GetSurfaceCapabilities(const BackendData& backendData, SurfaceData& surfaceData)
 {
-	VulkanCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surfaceData.surface, &surfaceData.surfaceCapabilities));
+	VulkanCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(backendData.physicalDevice, surfaceData.surface, &surfaceData.surfaceCapabilities));
 
 	if (surfaceData.surfaceCapabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
 	{
@@ -636,7 +636,7 @@ void VulkanBackend::GetSurfaceCapabilities(VkPhysicalDevice device, SurfaceData&
 	}
 }
 
-void VulkanBackend::GetSurfaceExtent(VkPhysicalDevice device, SurfaceData& surfaceData)
+void VulkanBackend::GetSurfaceExtent(const BackendData& backendData, SurfaceData& surfaceData)
 {
 	if (surfaceData.surfaceCapabilities.currentExtent.width != UINT32_MAX)
 	{
@@ -651,7 +651,7 @@ void VulkanBackend::GetSurfaceExtent(VkPhysicalDevice device, SurfaceData& surfa
 		std::min<uint32_t>(surfaceData.surfaceCapabilities.maxImageExtent.height, actualExtent.height));
 }
 
-void VulkanBackend::GetPresentMode(VkPhysicalDevice device, SurfaceData& surfaceData, bool vSync)
+void VulkanBackend::GetPresentMode(const BackendData& backendData, SurfaceData& surfaceData, bool vSync)
 {
 	if (vSync)
 	{
@@ -659,10 +659,10 @@ void VulkanBackend::GetPresentMode(VkPhysicalDevice device, SurfaceData& surface
 	}
 
 	uint32_t presentModeCount;
-	VulkanCheck(vkGetPhysicalDeviceSurfacePresentModesKHR(device, surfaceData.surface, &presentModeCount, nullptr));
+	VulkanCheck(vkGetPhysicalDeviceSurfacePresentModesKHR(backendData.physicalDevice, surfaceData.surface, &presentModeCount, nullptr));
 
 	std::vector<VkPresentModeKHR> presentModes(presentModeCount);
-	VulkanCheck(vkGetPhysicalDeviceSurfacePresentModesKHR(device, surfaceData.surface, &presentModeCount, presentModes.data()));
+	VulkanCheck(vkGetPhysicalDeviceSurfacePresentModesKHR(backendData.physicalDevice, surfaceData.surface, &presentModeCount, presentModes.data()));
 
 	VkPresentModeKHR bestMode = VK_PRESENT_MODE_FIFO_KHR;
 
