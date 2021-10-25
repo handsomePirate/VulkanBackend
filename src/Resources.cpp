@@ -131,11 +131,11 @@ void VulkanBackend::GenerateMips(const BackendData& backendData, VkCommandBuffer
 	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
-	int32_t mipWidth = width;
-	int32_t mipHeight = height;
+	int mipWidth = width;
+	int mipHeight = height;
 
 	// We iteratively blit/downsize the image subresources here to form the mip maps.
-	for (uint32_t mip = 1; mip < mipLevels; ++mip)
+	for (uint32_t mip = 1; mip < (uint32_t)mipLevels; ++mip)
 	{
 		// Thanks to this barrier specification we are accessing the different mip subresources of
 		// the image separately and also waiting for the previous operation on this image to finish
