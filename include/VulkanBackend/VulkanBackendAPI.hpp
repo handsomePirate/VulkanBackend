@@ -104,6 +104,7 @@ namespace VulkanBackend
 	void DestroyImage(const BackendData& backendData, Image& image);
 
 	void TransitionImageLayout(VkCommandBuffer commandBuffer, VkImageLayout currentLayout, VkImageLayout nextLayout, VkImage image, uint32_t mipLevels,
+		VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM, VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM,
 		uint32_t sourceQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t destinationQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED);
 	void GenerateMips(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, VkFormat imageFormat, int width, int height, int mipLevels);
 
