@@ -33,7 +33,7 @@ void VulkanBackend::DestroyImage(const BackendData& backendData, VulkanBackend::
 
 void VulkanBackend::TransitionImageLayout(VkCommandBuffer commandBuffer,
 	VkImageLayout currentLayout, VkImageLayout nextLayout, VkImage image, uint32_t mipLevels,
-	VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage,
+	VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, VkImageAspectFlags aspect,
 	uint32_t sourceQueueFamilyIndex, uint32_t destinationQueueFamilyIndex)
 {
 	VkImageMemoryBarrier barrier{};
@@ -53,89 +53,7 @@ void VulkanBackend::TransitionImageLayout(VkCommandBuffer commandBuffer,
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = 1;
 
-	VkPipelineStageFlags srcStage;
-	VkPipelineStageFlags dstStage;
-
-	// To transition the image, a pipeline barrier is needed.
-	if (currentLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
-		nextLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-	{
-		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-		if (sourceStage == VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM)
-		{
-			srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		}
-		if (destinationStage == VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM)
-		{
-			dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		}
-	}
-	else if (
-		currentLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
-		nextLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-	{
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		if (sourceStage == VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM)
-		{
-			srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		}
-		if (destinationStage == VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM)
-		{
-			dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		}
-	}
-	else if (
-		currentLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL &&
-		nextLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-	{
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		if (sourceStage == VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM)
-		{
-			srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		}
-		if (destinationStage == VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM)
-		{
-			dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		}
-	}
-	else if (
-		currentLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
-		nextLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-	{
-		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-		if (sourceStage == VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM)
-		{
-			srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		}
-		if (destinationStage == VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM)
-		{
-			dstStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		}
-	}
-	else
-	{
-		CoreLogError(VulkanLogger, "Vulkan backend: Unsupported layout transition.");
-	}
-
-	if (sourceStage != VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM)
-	{
-		srcStage = sourceStage;
-	}
-
-	if (destinationStage != VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM)
-	{
-		dstStage = destinationStage;
-	}
-
-	vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+	vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
 void VulkanBackend::GenerateMips(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, VkFormat imageFormat,
