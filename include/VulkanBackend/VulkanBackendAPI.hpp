@@ -25,6 +25,8 @@ namespace VulkanBackend
 		VkCommandPool transferCommandPool;
 		VkCommandBuffer transferCommandBuffer;
 		VkFence transferFence;
+		VkCommandPool generalCommandPool;
+		VkCommandBuffer generalCommandBuffer;
 	};
 
 	BackendData Initialize(const char* configFilePath);
