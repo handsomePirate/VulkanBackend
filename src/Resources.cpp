@@ -61,7 +61,7 @@ void VulkanBackend::TransitionImageLayout(VkCommandBuffer commandBuffer,
 		nextLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 	{
 		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask == VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
 		if (sourceStage == VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM)
 		{
