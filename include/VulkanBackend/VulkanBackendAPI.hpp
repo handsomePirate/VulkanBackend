@@ -105,6 +105,7 @@ namespace VulkanBackend
 
 	void TransitionImageLayout(VkCommandBuffer commandBuffer, VkImageLayout currentLayout, VkImageLayout nextLayout, VkImage image, uint32_t mipLevels,
 		VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, VkImageAspectFlags aspect,
+		VkAccessFlags sourceAccessMask, VkAccessFlags destinationAccessMask,
 		uint32_t sourceQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t destinationQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED);
 	void GenerateMips(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, VkFormat imageFormat, int width, int height, int mipLevels);
 

@@ -34,6 +34,7 @@ void VulkanBackend::DestroyImage(const BackendData& backendData, VulkanBackend::
 void VulkanBackend::TransitionImageLayout(VkCommandBuffer commandBuffer,
 	VkImageLayout currentLayout, VkImageLayout nextLayout, VkImage image, uint32_t mipLevels,
 	VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, VkImageAspectFlags aspect,
+	VkAccessFlags sourceAccessMask, VkAccessFlags destinationAccessMask,
 	uint32_t sourceQueueFamilyIndex, uint32_t destinationQueueFamilyIndex)
 {
 	VkImageMemoryBarrier barrier{};
@@ -52,6 +53,9 @@ void VulkanBackend::TransitionImageLayout(VkCommandBuffer commandBuffer,
 	barrier.subresourceRange.levelCount = mipLevels;
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = 1;
+
+	barrier.srcAccessMask = sourceAccessMask;
+	barrier.dstAccessMask = destinationAccessMask;
 
 	vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
