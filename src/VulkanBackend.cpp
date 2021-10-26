@@ -518,8 +518,8 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 
 void VulkanBackend::Shutdown(BackendData& backendData)
 {
-	FreeCommandBuffer(backendData, backendData.transferCommandPool, backendData.transferCommandBuffer);
-	DestroyCommandPool(backendData, backendData.transferCommandPool);
+	FreeCommandBuffer(backendData, backendData.generalCommandPool, backendData.generalCommandBuffer);
+	DestroyCommandPool(backendData, backendData.generalCommandPool);
 
 	DestroyFence(backendData, backendData.transferFence);
 	FreeCommandBuffer(backendData, backendData.transferCommandPool, backendData.transferCommandBuffer);
