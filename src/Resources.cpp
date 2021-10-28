@@ -150,7 +150,7 @@ void VulkanBackend::GenerateMips(const BackendData& backendData, VkCommandBuffer
 		0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
-VkImageView VulkanBackend::CreateImageView2D(const BackendData& backendData, VkImage image, VkFormat format, VkImageSubresourceRange subresource)
+VkImageView VulkanBackend::CreateImageView2D(const BackendData& backendData, VkImage image, VkFormat format, VkImageSubresourceRange& subresource)
 {
 	VkImageViewCreateInfo imageViewCreateInfo = {};
 	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

@@ -108,7 +108,7 @@ namespace VulkanBackend
 		uint32_t sourceQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t destinationQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED);
 	void GenerateMips(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, VkFormat imageFormat, int width, int height, int mipLevels);
 
-	VkImageView CreateImageView2D(const BackendData& backendData, VkImage image, VkFormat format, VkImageSubresourceRange subresource);
+	VkImageView CreateImageView2D(const BackendData& backendData, VkImage image, VkFormat format, VkImageSubresourceRange& subresource);
 	void DestroyImageView(const BackendData& backendData, VkImageView& imageView);
 
 	VkSampler CreateImageSampler(const BackendData& backendData, VkFilter magnificationFilter, VkFilter minificationFilter, VkBorderColor borderColor,
