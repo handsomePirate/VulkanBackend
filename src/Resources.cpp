@@ -227,8 +227,8 @@ void VulkanBackend::DestroyBuffer(const BackendData& backendData, VulkanBackend:
 	buffer.allocation = VK_NULL_HANDLE;
 }
 
-void VulkanBackend::CopyBufferToBuffer(const BackendData& backendData, VkBuffer source, VkBuffer destination, VkDeviceSize size, VkCommandBuffer commandBuffer,
-	VkQueue queue, VkDeviceSize sourceOffset, VkDeviceSize destinationOffset)
+void VulkanBackend::CopyBufferToBuffer(const BackendData& backendData, VkBuffer source, VkBuffer destination, VkDeviceSize size,
+	VkCommandBuffer commandBuffer, VkDeviceSize sourceOffset, VkDeviceSize destinationOffset)
 {
 	VkBufferCopy bufferCopy{};
 	bufferCopy.size = size;
@@ -237,8 +237,8 @@ void VulkanBackend::CopyBufferToBuffer(const BackendData& backendData, VkBuffer 
 	vkCmdCopyBuffer(commandBuffer, source, destination, 1, &bufferCopy);
 }
 
-void VulkanBackend::CopyBufferToImage(const BackendData& backendData, VkBuffer source, VkImage destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
-	VkQueue queue, uint32_t width, uint32_t height, VkImageAspectFlags aspect)
+void VulkanBackend::CopyBufferToImage(const BackendData& backendData, VkBuffer source, VkImage destination, VkImageLayout layout,
+	VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkImageAspectFlags aspect)
 {
 	VkBufferImageCopy bufferImageCopy{};
 	bufferImageCopy.imageSubresource.aspectMask = aspect;
@@ -249,8 +249,8 @@ void VulkanBackend::CopyBufferToImage(const BackendData& backendData, VkBuffer s
 	vkCmdCopyBufferToImage(commandBuffer, source, destination, layout, 1, &bufferImageCopy);
 }
 
-void VulkanBackend::CopyImageToBuffer(const BackendData& backendData, VkImage source, VkBuffer destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
-	VkQueue queue, uint32_t width, uint32_t height, VkImageAspectFlags aspect, int32_t xOffset, int32_t yOffset)
+void VulkanBackend::CopyImageToBuffer(const BackendData& backendData, VkImage source, VkBuffer destination, VkImageLayout layout,
+	VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkImageAspectFlags aspect, int32_t xOffset, int32_t yOffset)
 {
 	VkBufferImageCopy bufferImageCopy{};
 	bufferImageCopy.imageSubresource.aspectMask = aspect;

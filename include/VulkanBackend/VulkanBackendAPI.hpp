@@ -125,12 +125,12 @@ namespace VulkanBackend
 	Buffer CreateBuffer(const BackendData& backendData, VkBufferUsageFlags usage, VkDeviceSize size, VmaMemoryUsage residency);
 	void DestroyBuffer(const BackendData& backendData, Buffer& buffer);
 
-	void CopyBufferToBuffer(const BackendData& backendData, VkBuffer source, VkBuffer destination, VkDeviceSize size, VkCommandBuffer commandBuffer,
-		VkQueue queue, VkDeviceSize sourceOffset = 0, VkDeviceSize destinationOffset = 0);
-	void CopyBufferToImage(const BackendData& backendData, VkBuffer source, VkImage destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
-		VkQueue queue, uint32_t width, uint32_t height, VkImageAspectFlags aspect);
-	void CopyImageToBuffer(const BackendData& backendData, VkImage source, VkBuffer destination, VkImageLayout layout, VkCommandBuffer commandBuffer,
-		VkQueue queue, uint32_t width, uint32_t height, VkImageAspectFlags aspect, int32_t xOffset = 0, int32_t yOffset = 0);
+	void CopyBufferToBuffer(const BackendData& backendData, VkBuffer source, VkBuffer destination, VkDeviceSize size,
+		VkCommandBuffer commandBuffer, VkDeviceSize sourceOffset = 0, VkDeviceSize destinationOffset = 0);
+	void CopyBufferToImage(const BackendData& backendData, VkBuffer source, VkImage destination, VkImageLayout layout,
+		VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkImageAspectFlags aspect);
+	void CopyImageToBuffer(const BackendData& backendData, VkImage source, VkBuffer destination, VkImageLayout layout,
+		VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkImageAspectFlags aspect, int32_t xOffset = 0, int32_t yOffset = 0);
 
 	// ====================== Presentation =====================
 
