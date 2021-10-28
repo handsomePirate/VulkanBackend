@@ -23,10 +23,7 @@ namespace VulkanBackend
 		std::vector<VkQueue> presentQueueCandidates;
 		VmaAllocator allocator;
 		VkCommandPool transferCommandPool;
-		VkCommandBuffer transferCommandBuffer;
-		VkFence transferFence;
 		VkCommandPool generalCommandPool;
-		VkCommandBuffer generalCommandBuffer;
 	};
 
 	BackendData Initialize(const char* configFilePath);

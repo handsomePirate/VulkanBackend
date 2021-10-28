@@ -506,11 +506,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 	VulkanCheck(vmaCreateAllocator(&allocatorInfo, &backendData.allocator));
 
 	backendData.transferCommandPool = CreateCommandPool(backendData, backendData.transferFamilyIndex);
-	backendData.transferCommandBuffer = AllocateCommandBuffer(backendData, backendData.transferCommandPool);
-	backendData.transferFence = CreateFence(backendData);
-
 	backendData.generalCommandPool = CreateCommandPool(backendData, backendData.generalFamilyIndex);
-	backendData.generalCommandBuffer = AllocateCommandBuffer(backendData, backendData.generalCommandPool);
 
 	// Returning the initialized Vulkan structures.
 	return backendData;
@@ -518,11 +514,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 
 void VulkanBackend::Shutdown(BackendData& backendData)
 {
-	FreeCommandBuffer(backendData, backendData.generalCommandPool, backendData.generalCommandBuffer);
 	DestroyCommandPool(backendData, backendData.generalCommandPool);
-
-	DestroyFence(backendData, backendData.transferFence);
-	FreeCommandBuffer(backendData, backendData.transferCommandPool, backendData.transferCommandBuffer);
 	DestroyCommandPool(backendData, backendData.transferCommandPool);
 
 	vmaDestroyAllocator(backendData.allocator);
