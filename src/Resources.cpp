@@ -75,7 +75,7 @@ void VulkanBackend::GenerateMips(const BackendData& backendData, VkCommandBuffer
 		
 
 	// The barriers are used for transitions between image layouts.
-	VkImageMemoryBarrier barrier = {};
+	VkImageMemoryBarrier barrier{};
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	barrier.image = image;
 	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -105,7 +105,7 @@ void VulkanBackend::GenerateMips(const BackendData& backendData, VkCommandBuffer
 			0, 0, nullptr, 0, nullptr, 1, &barrier);
 
 		// We prepare the downsizing blit.
-		VkImageBlit blit = {};
+		VkImageBlit blit{};
 		blit.srcOffsets[0] = { 0, 0, 0 };
 		blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
 		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -151,9 +151,51 @@ void VulkanBackend::GenerateMips(const BackendData& backendData, VkCommandBuffer
 		0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
+void VulkanBackend::ReleaseImageOwnership(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, int mipLevels,
+	VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, VkImageAspectFlags aspect, VkImageLayout layout,
+	VkAccessFlags sourceAccessMask, int sourceQueueFamily, int destinationQueueFamily)
+{
+	VkImageMemoryBarrier barrier{};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.image = image;
+	barrier.srcQueueFamilyIndex = sourceQueueFamily;
+	barrier.dstQueueFamilyIndex = destinationQueueFamily;
+	barrier.subresourceRange.aspectMask = aspect;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+	barrier.subresourceRange.levelCount = mipLevels;
+	barrier.oldLayout = layout;
+	barrier.newLayout = layout;
+	barrier.srcAccessMask = sourceAccessMask;
+	barrier.dstAccessMask = VK_ACCESS_FLAG_BITS_MAX_ENUM;
+
+	vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 0, nullptr);
+}
+
+void VulkanBackend::AcquireImageOwnership(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, int mipLevels,
+	VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, VkImageAspectFlags aspect, VkImageLayout layout,
+	VkAccessFlags destinationAccessMask, int sourceQueueFamily, int destinationQueueFamily)
+{
+	VkImageMemoryBarrier barrier{};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.image = image;
+	barrier.srcQueueFamilyIndex = sourceQueueFamily;
+	barrier.dstQueueFamilyIndex = destinationQueueFamily;
+	barrier.subresourceRange.aspectMask = aspect;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+	barrier.subresourceRange.levelCount = mipLevels;
+	barrier.oldLayout = layout;
+	barrier.newLayout = layout;
+	barrier.srcAccessMask = VK_ACCESS_FLAG_BITS_MAX_ENUM;
+	barrier.dstAccessMask = destinationAccessMask;
+
+	vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 0, nullptr);
+}
+
 VkImageView VulkanBackend::CreateImageView2D(const BackendData& backendData, VkImage image, VkFormat format, VkImageSubresourceRange& subresource)
 {
-	VkImageViewCreateInfo imageViewCreateInfo = {};
+	VkImageViewCreateInfo imageViewCreateInfo{};
 	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	imageViewCreateInfo.image = image;

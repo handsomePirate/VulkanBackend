@@ -107,6 +107,12 @@ namespace VulkanBackend
 		VkAccessFlags sourceAccessMask, VkAccessFlags destinationAccessMask,
 		uint32_t sourceQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t destinationQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED);
 	void GenerateMips(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, VkFormat imageFormat, int width, int height, int mipLevels);
+	void ReleaseImageOwnership(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, int mipLevels,
+		VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, VkImageAspectFlags aspect, VkImageLayout layout,
+		VkAccessFlags sourceAccessMask, int sourceQueueFamily, int destinationQueueFamily);
+	void AcquireImageOwnership(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, int mipLevels,
+		VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, VkImageAspectFlags aspect, VkImageLayout layout,
+		VkAccessFlags destinationAccessMask, int sourceQueueFamily, int destinationQueueFamily);
 
 	VkImageView CreateImageView2D(const BackendData& backendData, VkImage image, VkFormat format, VkImageSubresourceRange& subresource);
 	void DestroyImageView(const BackendData& backendData, VkImageView& imageView);
