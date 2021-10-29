@@ -14,6 +14,7 @@ VulkanBackend::Image VulkanBackend::CreateImage2D(const BackendData& backendData
 	imageCreateInfo.samples = samples;
 	imageCreateInfo.tiling = imageTiling;
 	imageCreateInfo.usage = usage;
+	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	VmaAllocationCreateInfo allocationInfo{};
 	allocationInfo.usage = residency;
