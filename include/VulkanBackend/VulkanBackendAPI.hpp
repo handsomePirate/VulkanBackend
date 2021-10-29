@@ -94,8 +94,8 @@ namespace VulkanBackend
 	
 	struct Image
 	{
-		VkImage image;
-		VmaAllocation allocation;
+		VkImage image = VK_NULL_HANDLE;
+		VmaAllocation allocation = VMA_NULL;
 	};
 
 	Image CreateImage2D(const BackendData& backendData, uint32_t width, uint32_t height, uint32_t layerCount, uint32_t mipCount, VkImageUsageFlags usage,
@@ -118,8 +118,8 @@ namespace VulkanBackend
 
 	struct Buffer
 	{
-		VkBuffer buffer;
-		VmaAllocation allocation;
+		VkBuffer buffer = VK_NULL_HANLDE;
+		VmaAllocation allocation = VMA_NULL;
 	};
 
 	Buffer CreateBuffer(const BackendData& backendData, VkBufferUsageFlags usage, VkDeviceSize size, VmaMemoryUsage residency);
