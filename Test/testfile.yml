@@ -3,7 +3,7 @@
 # Application specifics.
 Application:
     # The minimal required version of Vulkan API.
-    vulkan-version: 1.2.175
+    vulkan-version: 1.2
     name: Vulkan Backend Test
     version: 0.1
     engine-name: Test Engine
