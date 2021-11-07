@@ -107,6 +107,7 @@ namespace VulkanBackend
 		VkAccessFlags sourceAccessMask, VkAccessFlags destinationAccessMask,
 		uint32_t sourceQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t destinationQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED);
 	void GenerateMips(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, VkFormat imageFormat, int width, int height, int mipLevels);
+	
 	void ReleaseImageOwnership(const BackendData& backendData, VkCommandBuffer commandBuffer, VkImage image, int mipLevels,
 		VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, VkImageAspectFlags aspect, VkImageLayout layout,
 		VkAccessFlags sourceAccessMask, int sourceQueueFamily, int destinationQueueFamily);
@@ -130,6 +131,13 @@ namespace VulkanBackend
 
 	Buffer CreateBuffer(const BackendData& backendData, VkBufferUsageFlags usage, VkDeviceSize size, VmaMemoryUsage residency);
 	void DestroyBuffer(const BackendData& backendData, Buffer& buffer);
+
+	void ReleaseBufferOwnership(const BackendData& backendData, VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize size,
+		VkDeviceSize offset, VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, VkAccessFlags sourceAccessMask,
+		int sourceQueueFamily, int destinationQueueFamily);
+	void AcquireBufferOwnership(const BackendData& backendData, VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize size,
+		VkDeviceSize offset, VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, VkAccessFlags destinationAccessMask,
+		int sourceQueueFamily, int destinationQueueFamily);
 
 	void CopyBufferToBuffer(const BackendData& backendData, VkBuffer source, VkBuffer destination, VkDeviceSize size,
 		VkCommandBuffer commandBuffer, VkDeviceSize sourceOffset = 0, VkDeviceSize destinationOffset = 0);

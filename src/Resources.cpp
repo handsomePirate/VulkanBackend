@@ -270,6 +270,38 @@ void VulkanBackend::DestroyBuffer(const BackendData& backendData, VulkanBackend:
 	buffer.allocation = VK_NULL_HANDLE;
 }
 
+void VulkanBackend::ReleaseBufferOwnership(const BackendData& backendData, VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize size, VkDeviceSize offset,
+	VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, VkAccessFlags sourceAccessMask, int sourceQueueFamily, int destinationQueueFamily)
+{
+	VkBufferMemoryBarrier barrier{};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.buffer = buffer;
+	barrier.srcQueueFamilyIndex = sourceQueueFamily;
+	barrier.dstQueueFamilyIndex = destinationQueueFamily;
+	barrier.size = size;
+	barrier.offset = offset;
+	barrier.srcAccessMask = sourceAccessMask;
+	barrier.dstAccessMask = VK_ACCESS_FLAG_BITS_MAX_ENUM;
+
+	vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 0, nullptr);
+}
+
+void VulkanBackend::AcquireBufferOwnership(const BackendData& backendData, VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize size, VkDeviceSize offset,
+	VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, VkAccessFlags destinationAccessMask, int sourceQueueFamily, int destinationQueueFamily)
+{
+	VkBufferMemoryBarrier barrier{};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.buffer = buffer;
+	barrier.srcQueueFamilyIndex = sourceQueueFamily;
+	barrier.dstQueueFamilyIndex = destinationQueueFamily;
+	barrier.size = size;
+	barrier.offset = offset;
+	barrier.srcAccessMask = VK_ACCESS_FLAG_BITS_MAX_ENUM;
+	barrier.dstAccessMask = destinationAccessMask;
+
+	vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 0, nullptr);
+}
+
 void VulkanBackend::CopyBufferToBuffer(const BackendData& backendData, VkBuffer source, VkBuffer destination, VkDeviceSize size,
 	VkCommandBuffer commandBuffer, VkDeviceSize sourceOffset, VkDeviceSize destinationOffset)
 {
