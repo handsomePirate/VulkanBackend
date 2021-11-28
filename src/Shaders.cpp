@@ -1,7 +1,8 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "VulkanBackend/ErrorCheck.hpp"
 
-VkDescriptorPool VulkanBackend::CreateDescriptorPool(const BackendData& backendData, const std::vector<VkDescriptorPoolSize> poolSizes, uint32_t maxSets)
+VkDescriptorPool VulkanBackend::CreateDescriptorPool(const BackendData& backendData, const std::vector<VkDescriptorPoolSize> poolSizes,
+	uint32_t maxSets)
 {
 	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
 	descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -20,7 +21,8 @@ void VulkanBackend::DestroyDescriptorPool(const BackendData& backendData, VkDesc
 	descriptorPool = VK_NULL_HANDLE;
 }
 
-VkDescriptorSetLayout VulkanBackend::CreateDescriptorSetLayout(const BackendData& backendData, const std::vector<VkDescriptorSetLayoutBinding>& layoutBindings)
+VkDescriptorSetLayout VulkanBackend::CreateDescriptorSetLayout(const BackendData& backendData,
+	const std::vector<VkDescriptorSetLayoutBinding>& layoutBindings)
 {
 	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
 	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -28,7 +30,8 @@ VkDescriptorSetLayout VulkanBackend::CreateDescriptorSetLayout(const BackendData
 	descriptorSetLayoutCreateInfo.pBindings = layoutBindings.data();
 
 	VkDescriptorSetLayout descriptorSetLayout;
-	VulkanCheck(vkCreateDescriptorSetLayout(backendData.logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout));
+	VulkanCheck(vkCreateDescriptorSetLayout(backendData.logicalDevice, &descriptorSetLayoutCreateInfo,
+		nullptr, &descriptorSetLayout));
 	return descriptorSetLayout;
 }
 
@@ -38,7 +41,8 @@ void VulkanBackend::DestroyDescriptorSetLayout(const BackendData& backendData, V
 	descriptorSetLayout = VK_NULL_HANDLE;
 }
 
-VkDescriptorSet VulkanBackend::AllocateDescriptorSet(const BackendData& backendData, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout)
+VkDescriptorSet VulkanBackend::AllocateDescriptorSet(const BackendData& backendData, VkDescriptorPool descriptorPool,
+	VkDescriptorSetLayout descriptorSetLayout)
 {
 	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{};
 	descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -51,7 +55,8 @@ VkDescriptorSet VulkanBackend::AllocateDescriptorSet(const BackendData& backendD
 	return descriptorSet;
 }
 
-void VulkanBackend::FreeDescriptorSet(const BackendData& backendData, VkDescriptorPool descriptorPool, VkDescriptorSet& descriptorSet)
+void VulkanBackend::FreeDescriptorSet(const BackendData& backendData, VkDescriptorPool descriptorPool,
+	VkDescriptorSet& descriptorSet)
 {
 	vkFreeDescriptorSets(backendData.logicalDevice, descriptorPool, 1, &descriptorSet);
 	descriptorSet = VK_NULL_HANDLE;
