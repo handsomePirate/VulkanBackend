@@ -36,7 +36,7 @@ Device:
     # find distinct ones. Present does not have a count (only one should be needed) and it gets all queue types
     # as candidates.
     queues:
-        general: 1
+        general: 2
         transfer: 1
         compute: 1
         present

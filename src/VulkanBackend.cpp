@@ -452,7 +452,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 	if (configData["Device"]["queues"]["compute"])
 	{
 		backendData.computeQueues.resize(configData["Device"]["queues"]["compute"].as<int>());
-		for (int i = 0; i < backendData.generalQueues.size(); ++i)
+		for (int i = 0; i < backendData.computeQueues.size(); ++i)
 		{
 			vkGetDeviceQueue(backendData.logicalDevice, indexMappings[deviceIndex]["compute"],
 				currentQueues[indexMappings[deviceIndex]["compute"]]++, &backendData.computeQueues[i]);
