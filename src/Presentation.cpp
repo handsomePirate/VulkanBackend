@@ -51,7 +51,8 @@ void VulkanBackend::GetSwapchainImages(const BackendData& backendData, VkSwapcha
 	VulkanCheck(vkGetSwapchainImagesKHR(backendData.logicalDevice, swapchain, &imageCount, images.data()));
 }
 
-VkFramebuffer VulkanBackend::CreateFramebuffer(const BackendData& backendData, uint32_t width, uint32_t height, VkRenderPass renderPass, const std::vector<VkImageView>& attachments)
+VkFramebuffer VulkanBackend::CreateFramebuffer(const BackendData& backendData, uint32_t width, uint32_t height, VkRenderPass renderPass,
+	const std::vector<VkImageView>& attachments)
 {
 	VkFramebufferCreateInfo framebufferCreateInfo{};
 	framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
