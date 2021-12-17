@@ -177,7 +177,8 @@ namespace VulkanBackend
 		VkBool32 depthWriteEnable, VkCompareOp compareOp, VkSampleCountFlagBits sampleCount, const std::vector<VkDynamicState>& dynamicStates,
 		VkPipelineVertexInputStateCreateInfo& vertexInputState, VkRenderPass renderPass, VkPipelineLayout pipelineLayout,
 		const std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkPipelineCache pipelineCache = VK_NULL_HANDLE);
-	VkPipeline CreateComputePipeline(const BackendData& backendData, VkPipelineLayout pipelineLayout, VkPipelineShaderStageCreateInfo& shaderStage, VkPipelineCache pipelineCache);
+	VkPipeline CreateComputePipeline(const BackendData& backendData, VkPipelineLayout pipelineLayout,
+		const VkPipelineShaderStageCreateInfo& shaderStage, VkPipelineCache pipelineCache);
 	void DestroyPipeline(const BackendData& backendData, VkPipeline& pipeline);
 
 	// ========================= Shader ========================

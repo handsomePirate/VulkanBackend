@@ -104,7 +104,8 @@ void VulkanBackend::DestroyPipelineCache(const BackendData& backendData, VkPipel
 	pipelineCache = VK_NULL_HANDLE;
 }
 
-VkPipelineLayout VulkanBackend::CreatePipelineLayout(const BackendData& backendData, VkDescriptorSetLayout descriptorSetLayout, VkPushConstantRange pushConstantRange)
+VkPipelineLayout VulkanBackend::CreatePipelineLayout(const BackendData& backendData, VkDescriptorSetLayout descriptorSetLayout,
+	VkPushConstantRange pushConstantRange)
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
 	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -202,8 +203,8 @@ VkPipeline VulkanBackend::CreateGraphicsPipeline(const BackendData& backendData,
 	return pipeline;
 }
 
-VkPipeline VulkanBackend::CreateComputePipeline(const BackendData& backendData, VkPipelineLayout pipelineLayout, VkPipelineShaderStageCreateInfo& shaderStage,
-	VkPipelineCache pipelineCache)
+VkPipeline VulkanBackend::CreateComputePipeline(const BackendData& backendData, VkPipelineLayout pipelineLayout,
+	const VkPipelineShaderStageCreateInfo& shaderStage, VkPipelineCache pipelineCache)
 {
 	VkComputePipelineCreateInfo computePipelineCreateInfo{};
 	computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
