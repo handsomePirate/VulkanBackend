@@ -163,7 +163,8 @@ namespace VulkanBackend
 
 	// ======================== Pipeline =======================
 
-	VkRenderPass CreateRenderPass(const BackendData& backendData, const SurfaceData& surfaceData, bool depth = false);
+	VkRenderPass CreateRenderPass(const BackendData& backendData, const SurfaceData& surfaceData, bool depth = false,
+		VkImageLayout colorInitialLayout = VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout colorFinalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 	void DestroyRenderPass(const BackendData& backendData, VkRenderPass& renderPass);
 
 	VkPipelineCache CreatePipelineCache(const BackendData& backendData);

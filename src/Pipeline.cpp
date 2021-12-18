@@ -1,7 +1,8 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "VulkanBackend/ErrorCheck.hpp"
 
-VkRenderPass VulkanBackend::CreateRenderPass(const BackendData& backendData, const SurfaceData& surfaceData, bool depth)
+VkRenderPass VulkanBackend::CreateRenderPass(const BackendData& backendData, const SurfaceData& surfaceData, bool depth,
+	VkImageLayout colorInitialLayout, VkImageLayout colorFinalLayout)
 {
 	const int attachmentCount = 2;
 	VkAttachmentDescription attachments[attachmentCount];
@@ -9,12 +10,19 @@ VkRenderPass VulkanBackend::CreateRenderPass(const BackendData& backendData, con
 	attachments[0] = {};
 	attachments[0].format = surfaceData.surfaceFormat.format;
 	attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-	attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	if (colorInitialLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+	{
+		attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	}
+	else
+	{
+		attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+	}
 	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	attachments[0].initialLayout = colorInitialLayout;
+	attachments[0].finalLayout = colorFinalLayout;
 	if (depth)
 	{
 		// Depth attachment
