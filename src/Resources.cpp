@@ -1,5 +1,6 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "VulkanBackend/ErrorCheck.hpp"
+#include <SoftwareCore/DefaultLogger.hpp>
 
 VulkanBackend::Image VulkanBackend::CreateImage2D(const BackendData& backendData, uint32_t width, uint32_t height, uint32_t layerCount, uint32_t mipCount,
 	VkImageUsageFlags usage, VkFormat format, VmaMemoryUsage residency, VkImageTiling imageTiling, VkSampleCountFlagBits samples)
@@ -70,7 +71,7 @@ void VulkanBackend::GenerateMips(const BackendData& backendData, VkCommandBuffer
 
 	if ((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0)
 	{
-		CoreLogError(VulkanLogger, "Vulkan backend: Texture format is not supported for linear blitting.");
+		CoreLogError(DefaultLogger, "Vulkan backend: Texture format is not supported for linear blitting.");
 	}
 		
 

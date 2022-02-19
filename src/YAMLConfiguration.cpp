@@ -1,6 +1,5 @@
 #include "YAMLConfiguration.hpp"
-#include "VulkanBackend/Logger.hpp"
-#include <SoftwareCore/Logger.hpp>
+#include <SoftwareCore/DefaultLogger.hpp>
 #include <regex>
 
 Configurator::Version Configurator::VersionFromString(const std::string& version)
@@ -9,7 +8,7 @@ Configurator::Version Configurator::VersionFromString(const std::string& version
 	std::regex versionMajorMinorRegex("[0-9]+\\.[0-9]+");
 	if (!std::regex_match(version, versionAllRegex) && !std::regex_match(version, versionMajorMinorRegex))
 	{
-		CoreLogError(VulkanLogger, "Configuration: Wrong version format.");
+		CoreLogError(DefaultLogger, "Configuration: Wrong version format.");
 		return { 0, 0, 0 };
 	}
 
@@ -33,27 +32,27 @@ Configurator::ApplicationInfo Configurator::ConfigureApplication(const YAML::Nod
 	
 	if (!applicationData["vulkan-version"])
 	{
-		CoreLogWarn(VulkanLogger, "Configuration: Missing Vulkan API version (default = 1.2.0).");
+		CoreLogWarn(DefaultLogger, "Configuration: Missing Vulkan API version (default = 1.2.0).");
 	}
 
 	if (!applicationData["name"])
 	{
-		CoreLogWarn(VulkanLogger, "Configuration: Missing application name (default = \"unknown\").");
+		CoreLogWarn(DefaultLogger, "Configuration: Missing application name (default = \"unknown\").");
 	}
 
 	if (!applicationData["version"])
 	{
-		CoreLogWarn(VulkanLogger, "Configuration: Missing application version (default = 0.0.0).");
+		CoreLogWarn(DefaultLogger, "Configuration: Missing application version (default = 0.0.0).");
 	}
 
 	if (!applicationData["engine-name"])
 	{
-		CoreLogWarn(VulkanLogger, "Configuration: Missing engine name (default = \"unknown\").");
+		CoreLogWarn(DefaultLogger, "Configuration: Missing engine name (default = \"unknown\").");
 	}
 
 	if (!applicationData["engine-version"])
 	{
-		CoreLogWarn(VulkanLogger, "Configuration: Missing engine version (default = 0.0.0).");
+		CoreLogWarn(DefaultLogger, "Configuration: Missing engine version (default = 0.0.0).");
 	}
 
 	applicationInfo.vulkanVersion = applicationData["vulkan-version"] ?

@@ -1,8 +1,7 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "YAMLConfiguration.hpp"
 #include "VulkanBackend/ErrorCheck.hpp"
-#include "VulkanBackend/Logger.hpp"
-#include <SoftwareCore/Logger.hpp>
+#include <SoftwareCore/DefaultLogger.hpp>
 #include <vulkan/vulkan.hpp>
 #include <yaml-cpp/yaml.h>
 
@@ -32,7 +31,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 	else
 	{
 		// Default if data is missing.
-		CoreLogWarn(VulkanLogger, "Configuration: Missing application configuration.");
+		CoreLogWarn(DefaultLogger, "Configuration: Missing application configuration.");
 		applicationInfo.vulkanVersion = Configurator::Constants::defaultVulkanVersion;
 		applicationInfo.applicationName = Configurator::Constants::defaultName;
 		applicationInfo.applicationVersion = Configurator::Constants::defaultVersion;
@@ -74,20 +73,20 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 		// Logging if layers or extensions haven"t been found.
 		if (!hasExtensions && !hasLayers)
 		{
-			CoreLogWarn(VulkanLogger, "Configuration: No instance extensions or layers.");
+			CoreLogWarn(DefaultLogger, "Configuration: No instance extensions or layers.");
 		}
 		else if (!hasExtensions)
 		{
-			CoreLogInfo(VulkanLogger, "Configuration: No instance extensions.");
+			CoreLogInfo(DefaultLogger, "Configuration: No instance extensions.");
 		}
 		else if (!hasLayers)
 		{
-			CoreLogInfo(VulkanLogger, "Configuration: No instance layers.");
+			CoreLogInfo(DefaultLogger, "Configuration: No instance layers.");
 		}
 	}
 	else
 	{
-		CoreLogInfo(VulkanLogger, "Configuration: No instance extensions or layers.");
+		CoreLogInfo(DefaultLogger, "Configuration: No instance extensions or layers.");
 	}
 
 	// TODO: Check that layers & extensions are present.
@@ -152,7 +151,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 		else
 		{
 			// The debug messenger creation fails at this point mostly when the VK_EXT_debug_utils extension is missing from the instance.
-			CoreLogError(VulkanLogger, "Vulkan: Failed to create debug messenger (might be missing the \"VK_EXT_debug_utils\" instance extension).");
+			CoreLogError(DefaultLogger, "Vulkan: Failed to create debug messenger (might be missing the \"VK_EXT_debug_utils\" instance extension).");
 		}
 	}
 
@@ -277,7 +276,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 					int minor = VK_API_VERSION_MINOR(deviceProperties[d].apiVersion);
 					int patch = VK_API_VERSION_PATCH(deviceProperties[d].apiVersion);
 					
-					CoreLogInfo(VulkanLogger, 
+					CoreLogInfo(DefaultLogger, 
 						"Configuration: Preferred device does not support the selected API version (maximum supported version: %i.%i.%i).",
 						major, minor, patch);
 
@@ -295,7 +294,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 		// Reporting results from preferred device search.
 		if (!foundPreferredDevice)
 		{
-			CoreLogInfo(VulkanLogger, "Configuration: Preferred device matching requirements could not be found.");
+			CoreLogInfo(DefaultLogger, "Configuration: Preferred device matching requirements could not be found.");
 		}
 
 		if (backendData.physicalDevice == VK_NULL_HANDLE)
@@ -346,7 +345,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 						pickedDeviceFeatures = preferredDevicesFeatures[d];
 						deviceIndex = d;
 						deviceQueueFamilyCount = (int)queueProperties[d].size();
-						CoreLogInfo(VulkanLogger, "Configuration: Found suitable preferred vendor device.");
+						CoreLogInfo(DefaultLogger, "Configuration: Found suitable preferred vendor device.");
 						break;
 					}
 				}
@@ -357,7 +356,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 				// Checking the rest of the devices if no suitable preferred vendor device is present.
 				if (preferredVendorId > 0)
 				{
-					CoreLogInfo(VulkanLogger, "Configuration: No suitable devices found from preferred vendor.");
+					CoreLogInfo(DefaultLogger, "Configuration: No suitable devices found from preferred vendor.");
 				}
 				for (int d = 0; d < otherDevices.size(); ++d)
 				{
@@ -371,7 +370,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 							pickedDeviceFeatures = otherDevicesFeatures[d];
 							deviceIndex = d;
 							deviceQueueFamilyCount = (int)queueProperties[d].size();
-							CoreLogInfo(VulkanLogger, "Configuration: A satisfactory device found.");
+							CoreLogInfo(DefaultLogger, "Configuration: A satisfactory device found.");
 							break;
 						}
 					}
@@ -381,7 +380,7 @@ VulkanBackend::BackendData VulkanBackend::Initialize(const char* configFilePath)
 			if (backendData.physicalDevice == VK_NULL_HANDLE)
 			{
 				// In case no available device fulfills the requirements, we report a failure and the initialization cannot continue.
-				CoreLogError(VulkanLogger, "Configuration: No suitable devices available - initialization failed.");
+				CoreLogError(DefaultLogger, "Configuration: No suitable devices available - initialization failed.");
 				DestroyInstance(backendData);
 				return backendData;
 			}
@@ -576,7 +575,7 @@ void VulkanBackend::GetSurfaceFormat(const BackendData& backendData, SurfaceData
 	VulkanCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(backendData.physicalDevice, surfaceData.surface, &formatCount, NULL));
 	if (formatCount == 0)
 	{
-		CoreLogError(VulkanLogger, "Vulkan: Couldn't find a surface format.");
+		CoreLogError(DefaultLogger, "Vulkan: Couldn't find a surface format.");
 	}
 
 	std::vector<VkSurfaceFormatKHR> surfaceFormats(formatCount);
@@ -727,7 +726,7 @@ void VulkanBackend::FilterPresentQueues(const BackendData& backendData, SurfaceD
 
 	if (presentQueues == 0)
 	{
-		CoreLogError(VulkanLogger, "Vulkan: No present-capable queues available.");
+		CoreLogError(DefaultLogger, "Vulkan: No present-capable queues available.");
 	}
 }
 
@@ -798,7 +797,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(
 		break;
 	}
 	
-	VulkanLogger.Log(severity, "%s", pCallbackData->pMessage);
+	DefaultLogger.Log(severity, "%s", pCallbackData->pMessage);
 
 	return VK_TRUE;
 }

@@ -1,5 +1,4 @@
 #pragma once
-#include "Logger.hpp"
 #include <SoftwareCore/Logger.hpp>
 #include <vulkan/vulkan_core.h>
 #include <vk_mem_alloc.h>

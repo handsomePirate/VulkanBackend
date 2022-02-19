@@ -1,6 +1,9 @@
-#include <yaml-cpp/yaml.h>
 #include <VulkanBackend/VulkanBackendAPI.hpp>
+#include <VulkanBackend/ErrorCheck.hpp>
 #include <SoftwareCore/Filesystem.hpp>
+#include <SoftwareCore/DefaultLogger.hpp>
+#include <SoftwareCore/Process.hpp>
+#include <yaml-cpp/yaml.h>
 #include <iostream>
 
 void ConsoleOutput(const char* message, ::Core::LoggerSeverity severity)
@@ -30,14 +33,22 @@ void ConsoleOutput(const char* message, ::Core::LoggerSeverity severity)
 
 int main(int argc, char* argv[])
 {
-	VulkanLogger.SetNewOutput(ConsoleOutput);
+	DefaultLogger.SetNewOutput(ConsoleOutput);
 
-	Core::Filesystem filesystem(argv[0]);
+	Core::Filesystem filesystem(CoreProcess.GetRuntimePath());
 	std::string pathToYamlFile = filesystem.GetAbsolutePath("../../testfile.yml");
 
 	VulkanBackend::BackendData backendData = VulkanBackend::Initialize(pathToYamlFile.c_str());
 
-	VulkanBackend::CreateBuffer(backendData, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 24, VMA_MEMORY_USAGE_GPU_ONLY);
+	auto buffer = VulkanBackend::CreateBuffer(backendData, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		24, VMA_MEMORY_USAGE_GPU_ONLY);
+	VulkanBackend::DestroyBuffer(backendData, buffer);
+
+	VulkanCheck(VK_SUCCESS);
+
+	VkDeviceCreateInfo deviceCreateInfo{};
+	VkDevice device;
+	VulkanCheck(vkCreateDevice(backendData.physicalDevice, &deviceCreateInfo, nullptr, &device));
 
 	VulkanBackend::Shutdown(backendData);
 
