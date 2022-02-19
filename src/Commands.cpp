@@ -1,5 +1,6 @@
 #include "VulkanBackend/VulkanBackendAPI.hpp"
 #include "VulkanBackend/ErrorCheck.hpp"
+#include <string.h>
 
 VkCommandPool VulkanBackend::CreateCommandPool(const BackendData& backendData, uint32_t queueIndex, VkCommandPoolCreateFlags flags)
 {

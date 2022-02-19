@@ -9,7 +9,7 @@
 
 void VulkanBackend::CreateSurface(const BackendData& backendData, SurfaceData& surfaceData, void* windowHandle, void* connection)
 {
-	VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {};
+	VkXlibSurfaceCreateInfoKHR surfaceCreateInfo = {};
 	surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
 	surfaceCreateInfo.dpy = (::Display*)connection;
 	surfaceCreateInfo.window = (::Window)windowHandle;
